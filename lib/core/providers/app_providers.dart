@@ -1,6 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sehatapp/features/splash/presentation/bloc/splash_cubit.dart';
+import 'package:sehatapp/features/auth/bloc/validation/login_validation.dart';
+import 'package:sehatapp/features/auth/bloc/validation/signup_validation_cubit.dart';
+import 'package:sehatapp/features/onboarding/bloc/onboarding_cubit.dart';
+import 'package:sehatapp/features/profile/bloc/profile_setup_cubit.dart';
+import 'package:sehatapp/features/splash/bloc/splash_cubit.dart';
+import 'package:sehatapp/features/dashboard/bloc/banner_cubit.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({super.key, required this.child});
@@ -12,6 +17,11 @@ class AppProviders extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<SplashCubit>(create: (_) => SplashCubit()),
+        BlocProvider<OnboardingCubit>(create: (_) => OnboardingCubit()),
+        BlocProvider<LoginValidationCubit>(create: (_) => LoginValidationCubit()),
+        BlocProvider<SignupValidationCubit>(create: (_) => SignupValidationCubit()),
+        BlocProvider<ProfileSetupCubit>(create: (_) => ProfileSetupCubit()),
+        BlocProvider<BannerCubit>(create: (_) => BannerCubit()),
       ],
       child: child,
     );
