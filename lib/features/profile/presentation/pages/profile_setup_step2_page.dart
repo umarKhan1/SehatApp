@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/constants/app_strings.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:sehatapp/core/widgets/buttons/primary_button.dart';
 import 'package:sehatapp/features/profile/bloc/profile_setup_cubit.dart';
 
@@ -29,24 +30,19 @@ class ProfileSetupStep2Page extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure step resets to 1 when popping via system back or gesture
+    final tx = AppTexts.of(context);
     return PopScope(
-    
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) {
-       context.read<ProfileSetupCubit>()
-          .prevStep();
+          context.read<ProfileSetupCubit>().prevStep();
         }
       },
       child: BlocListener<ProfileSetupCubit, ProfileSetupState>(
         listenWhen: (prev, curr) => prev.submitting != curr.submitting || prev.isValid != curr.isValid,
-        listener: (context, state) {
-          // Handle completion navigation later (e.g., to home) after submit success
-        },
+        listener: (context, state) {},
         child: BlocBuilder<ProfileSetupCubit, ProfileSetupState>(
           builder: (context, state) {
             return Scaffold(
-             
               body: SafeArea(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -56,13 +52,12 @@ class ProfileSetupStep2Page extends StatelessWidget {
                       children: [
                         SizedBox(height: 24.h),
                         IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    context.read<ProfileSetupCubit>().prevStep();
-                    context.pop();
-                  },
-                ),
-                        
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () {
+                            context.read<ProfileSetupCubit>().prevStep();
+                            context.pop();
+                          },
+                        ),
                         Center(
                           child: Container(
                             width: 88.w,
@@ -73,10 +68,10 @@ class ProfileSetupStep2Page extends StatelessWidget {
                         ),
                         SizedBox(height: 16.h),
                         Center(
-                          child: Text(AppStrings.basicInformation, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                          child: Text(tx.basicInformation, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                         ),
                         SizedBox(height: 24.h),
-                        Text(AppStrings.dobLabel, style: Theme.of(context).textTheme.bodyMedium),
+                        Text(tx.dobLabel, style: Theme.of(context).textTheme.bodyMedium),
                         SizedBox(height: 8.h),
                         InkWell(
                           onTap: () => _pickDob(context, state),
@@ -90,7 +85,7 @@ class ProfileSetupStep2Page extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  state.dob != null ? _formatDate(state.dob!) : 'Select date',
+                                  state.dob != null ? _formatDate(state.dob!) : tx.selectDate,
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                                 const Icon(Icons.calendar_today, size: 18),
@@ -102,33 +97,33 @@ class ProfileSetupStep2Page extends StatelessWidget {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            '${AppStrings.yourAgePrefix}${state.age ?? '--'}',
+                            '${tx.yourAgePrefix}${state.age ?? '--'}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        Text(AppStrings.genderLabel, style: Theme.of(context).textTheme.bodyMedium),
+                        Text(tx.genderLabel, style: Theme.of(context).textTheme.bodyMedium),
                         SizedBox(height: 8.h),
                         _Dropdown<String>(
                           value: state.gender.isEmpty ? null : state.gender,
-                          items: const ['Male', 'Female', 'Other'],
+                          items: [tx.male, tx.female, tx.other],
                           onChanged: (v) => context.read<ProfileSetupCubit>().onGenderChanged(v ?? ''),
                         ),
                         SizedBox(height: 16.h),
-                        Text(AppStrings.donateWishLabel, style: Theme.of(context).textTheme.bodyMedium),
+                        Text(tx.donateWishLabel, style: Theme.of(context).textTheme.bodyMedium),
                         SizedBox(height: 8.h),
                         _Dropdown<String>(
-                          value: state.wantToDonate == null ? null : (state.wantToDonate! ? 'Yes' : 'No'),
-                          items: const ['Yes', 'No'],
-                          onChanged: (v) => context.read<ProfileSetupCubit>().onWantToDonateChanged(v == 'Yes'),
+                          value: state.wantToDonate == null ? null : (state.wantToDonate! ? tx.yes : tx.no),
+                          items: [tx.yes, tx.no],
+                          onChanged: (v) => context.read<ProfileSetupCubit>().onWantToDonateChanged(v == tx.yes),
                         ),
                         SizedBox(height: 16.h),
-                        Text(AppStrings.aboutYourselfLabel, style: Theme.of(context).textTheme.bodyMedium),
+                        Text(tx.aboutYourselfLabel, style: Theme.of(context).textTheme.bodyMedium),
                         SizedBox(height: 8.h),
                         _MultilineBox(
                           initialText: state.about,
                           onChanged: context.read<ProfileSetupCubit>().onAboutChanged,
-                          hint: AppStrings.aboutYourselfHint,
+                          hint: tx.aboutYourselfHint,
                         ),
                         SizedBox(height: 24.h),
                         PrimaryButton(
@@ -155,15 +150,8 @@ class ProfileSetupStep2Page extends StatelessWidget {
   }
 
   String _formatDate(DateTime d) {
-    return '${_two(d.day)} ${_month(d.month)} ${d.year}';
-  }
-
-  String _two(int n) => n.toString().padLeft(2, '0');
-  String _month(int m) {
-    const months = [
-      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
-    ];
-    return months[m-1];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${d.day.toString().padLeft(2, '0')} ${months[d.month-1]} ${d.year}';
   }
 }
 

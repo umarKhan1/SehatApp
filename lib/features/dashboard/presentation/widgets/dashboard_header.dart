@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 
 class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
   const DashboardHeader({super.key, this.userName = 'User name', this.avatarAsset = 'assets/images/applogo.png', this.donateOn = false, this.onNotificationsTap});
@@ -14,6 +15,7 @@ class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -36,7 +38,7 @@ class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Donate Blood : ${donateOn ? 'On' : 'Off'}',
+                    '${tx.bloodDonor} : ${donateOn ? tx.yes : tx.no}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: donateOn ? Colors.green : Colors.redAccent),
                     overflow: TextOverflow.ellipsis,
                   ),

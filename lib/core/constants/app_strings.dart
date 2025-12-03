@@ -58,7 +58,7 @@ class AppStrings {
 
   // Profile Setup (Step 1)
   static const String profileSetupTitle = 'Profile Setup';
-  static const String profileSetupOptionalNote = "It’s Optional. You can fill it out later. Go to the next step by clicking the Skip button";
+  static const String profileSetupOptionalNote = 'It’s Optional. You can fill it out later. Go to the next step by clicking the Skip button';
   static const String personalInformation = 'Personal Information';
   static const String yourNameLabel = 'Your Name';
   static const String mobileNumberLabel = 'Mobile Number';

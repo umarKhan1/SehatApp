@@ -13,7 +13,6 @@ class MessageBubble extends StatelessWidget {
     final bg = isMe ?  AppTheme.primary : const Color(0xFFF1F3F6);
     final fg = isMe ? Colors.white : Colors.black87;
     final align = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final primary = Theme.of(context).colorScheme.primary;
 
     return Column(
       crossAxisAlignment: align,

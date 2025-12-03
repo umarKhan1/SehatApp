@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sehatapp/core/constants/app_strings.dart';
+
 import 'package:sehatapp/core/constants/app_options.dart';
 import 'package:sehatapp/core/widgets/buttons/primary_button.dart';
 import 'package:sehatapp/core/widgets/inputs/app_text_field.dart';
 import 'package:sehatapp/features/profile/bloc/profile_setup_cubit.dart';
+import 'package:sehatapp/l10n/app_localizations.dart';
 
 class ProfileSetupStep1Page extends StatefulWidget {
   const ProfileSetupStep1Page({super.key});
@@ -36,6 +37,7 @@ class _ProfileSetupStep1PageState extends State<ProfileSetupStep1Page> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return BlocListener<ProfileSetupCubit, ProfileSetupState>(
       listenWhen: (prev, curr) => prev.step != curr.step,
       listener: (context, state) {
@@ -52,7 +54,6 @@ class _ProfileSetupStep1PageState extends State<ProfileSetupStep1Page> {
           final bool cityEnabled = state.country.isNotEmpty && cities.isNotEmpty;
 
           return Scaffold(
-            
             body: SafeArea(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -61,7 +62,7 @@ class _ProfileSetupStep1PageState extends State<ProfileSetupStep1Page> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 28.h),
-                      Text(AppStrings.profileSetupOptionalNote, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t.profileSetupOptionalNote, style: Theme.of(context).textTheme.bodyMedium),
                       SizedBox(height: 24.h),
                       Center(
                         child: Container(
@@ -73,53 +74,50 @@ class _ProfileSetupStep1PageState extends State<ProfileSetupStep1Page> {
                       ),
                       SizedBox(height: 16.h),
                       Center(
-                        child: Text(AppStrings.personalInformation, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        child: Text(t.personalInformation, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                       ),
                       SizedBox(height: 24.h),
                       AppTextField(
-                        label: AppStrings.yourNameLabel,
-                        hint: AppStrings.userNameHint,
+                        label: t.yourNameLabel,
+                        hint: t.userNameHint,
                         controller: _nameCtrl,
                         onChanged: context.read<ProfileSetupCubit>().onNameChanged,
                       ),
                       SizedBox(height: 16.h),
                       AppTextField(
-                        label: AppStrings.mobileNumberLabel,
-                        hint: AppStrings.userNameHint,
+                        label: t.mobileNumberLabel,
+                        hint: t.userNameHint,
                         keyboardType: TextInputType.phone,
                         controller: _phoneCtrl,
                         onChanged: context.read<ProfileSetupCubit>().onPhoneChanged,
                       ),
                       SizedBox(height: 16.h),
-                      // Blood group dropdown
-                      Text(AppStrings.selectGroupLabel, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t.selectGroupLabel, style: Theme.of(context).textTheme.bodyMedium),
                       SizedBox(height: 8.h),
                       _Dropdown<String>(
                         value: state.bloodGroup.isEmpty ? null : state.bloodGroup,
                         items: bloodGroups,
-                        hint: AppStrings.bloodGroupHint,
+                        hint: t.bloodGroupHint,
                         onChanged: (v) => context.read<ProfileSetupCubit>().onBloodGroupChanged(v ?? ''),
                       ),
                       SizedBox(height: 16.h),
-                      // Country dropdown
-                      Text(AppStrings.countryLabel, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t.countryLabel, style: Theme.of(context).textTheme.bodyMedium),
                       SizedBox(height: 8.h),
                       _Dropdown<String>(
                         value: state.country.isEmpty ? null : state.country,
                         items: countries,
-                        hint: AppStrings.countryHint,
+                        hint: t.countryHint,
                         onChanged: (v) {
                           final val = v ?? '';
                           final cubit = context.read<ProfileSetupCubit>()
-                          ..onCountryChanged(val);
+                            ..onCountryChanged(val);
                           if (!(AppOptions.citiesByCountry[val] ?? const []).contains(state.city)) {
                             cubit.onCityChanged('');
                           }
                         },
                       ),
                       SizedBox(height: 16.h),
-                      // City dropdown (depends on country)
-                      Text(AppStrings.cityLabel, style: Theme.of(context).textTheme.bodyMedium),
+                      Text(t.cityLabel, style: Theme.of(context).textTheme.bodyMedium),
                       SizedBox(height: 8.h),
                       AbsorbPointer(
                         absorbing: !cityEnabled,
@@ -128,14 +126,14 @@ class _ProfileSetupStep1PageState extends State<ProfileSetupStep1Page> {
                           child: _Dropdown<String>(
                             value: state.city.isEmpty ? null : state.city,
                             items: cities,
-                            hint: AppStrings.cityHint,
+                            hint: t.cityHint,
                             onChanged: (v) => context.read<ProfileSetupCubit>().onCityChanged(v ?? ''),
                           ),
                         ),
                       ),
                       SizedBox(height: 24.h),
                       PrimaryButton(
-                        label: AppStrings.nextLabel,
+                        label: t.nextLabel,
                         enabled: state.isValid,
                         onPressed: () {
                           context.read<ProfileSetupCubit>().nextStep();

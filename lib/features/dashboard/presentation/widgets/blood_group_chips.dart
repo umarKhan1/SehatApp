@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/constants/app_options.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 
 class BloodGroupChips extends StatelessWidget {
   const BloodGroupChips({super.key, this.onSelect});
@@ -11,10 +12,11 @@ class BloodGroupChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groups = AppOptions.bloodGroups;
+    final tx = AppTexts.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Blood Group', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+        Text(tx.bloodGroupTitle, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         SizedBox(height: 12.h),
         Wrap(
           spacing: 12.w,

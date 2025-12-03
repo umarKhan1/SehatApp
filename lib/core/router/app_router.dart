@@ -1,14 +1,14 @@
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/features/auth/presentation/pages/login_page.dart';
 import 'package:sehatapp/features/auth/presentation/pages/signup_page.dart';
+import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_page.dart';
 import 'package:sehatapp/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:sehatapp/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step1_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step2_page.dart';
-import 'package:sehatapp/features/splash/presentation/splash_page.dart';
 import 'package:sehatapp/features/search/presentation/pages/search_page.dart';
-import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_page.dart';
 import 'package:sehatapp/features/shell/presentation/pages/shell_page.dart';
+import 'package:sehatapp/features/splash/presentation/splash_page.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: <RouteBase>[

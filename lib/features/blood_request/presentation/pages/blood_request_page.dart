@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_item.dart';
-import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_card.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
+import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_card.dart';
+import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_item.dart';
 
 class BloodRequestPage extends StatelessWidget {
   const BloodRequestPage({super.key, this.group});
@@ -19,6 +20,7 @@ class BloodRequestPage extends StatelessWidget {
         bloodGroup: group ?? 'B+',
       ),
     );
+    final tx = AppTexts.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -34,7 +36,7 @@ class BloodRequestPage extends StatelessWidget {
                       onPressed: () => Navigator.of(context).maybePop()),
                   Expanded(
                       child: Center(
-                          child: Text('Blood Request',
+                          child: Text(tx.bloodRequestTitle,
                               style: Theme.of(context).textTheme.titleLarge))),
                   SizedBox(width: 48.w),
                 ],
@@ -42,7 +44,7 @@ class BloodRequestPage extends StatelessWidget {
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  Text('Blood request',
+                  Text(tx.bloodRequestBreadcrumb,
                       style: Theme.of(context).textTheme.bodyMedium),
                   SizedBox(width: 8.w),
                   const Icon(Icons.location_on, color: Colors.redAccent, size: 18),
@@ -59,7 +61,7 @@ class BloodRequestPage extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  separatorBuilder: (_, _) => SizedBox(height: 12.h),
                   itemBuilder: (context, i) {
                     final item = items[i];
                     return InkWell(
@@ -97,7 +99,7 @@ class BloodRequestPage extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(group ?? 'B+ Blood',
+                      Text(tx.bloodWithGroup(group ?? 'B+'),
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium

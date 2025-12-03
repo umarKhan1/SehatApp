@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:sehatapp/features/chat/presentation/pages/chat_page.dart';
 
 class BloodRequestDetailsPage extends StatelessWidget {
@@ -9,6 +10,7 @@ class BloodRequestDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -25,7 +27,7 @@ class BloodRequestDetailsPage extends StatelessWidget {
                   Expanded(
                     child: Center(
                       child: Text(
-                        'Post Details',
+                        tx.postDetailsTitle,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
@@ -66,19 +68,19 @@ class BloodRequestDetailsPage extends StatelessWidget {
               SizedBox(height: 20.h),
               const Divider(),
                SizedBox(height: 7.h),
-              _DetailsRow(icon: Icons.person, label: 'Contact Person', value: 'Person Name'),
+              _DetailsRow(icon: Icons.person, label: tx.contactPersonLabel, value: 'Person Name'),
               SizedBox(height: 7.h),
-              _DetailsRow(icon: Icons.phone, label: 'Mobile Number', value: '+88 01112233344'),
+              _DetailsRow(icon: Icons.phone, label: tx.mobileNumberLabel, value: '+88 01112233344'),
               SizedBox(height: 7.h),
-              _DetailsRow(icon: Icons.bloodtype, label: 'How many Bag(s)', value: '3 Bags'),
+              _DetailsRow(icon: Icons.bloodtype, label: tx.howManyBagsLabel, value: '3 Bags'),
               SizedBox(height: 7.h), 
-              _DetailsRow(icon: Icons.public, label: 'Country', value: 'Bangladesh'),
+              _DetailsRow(icon: Icons.public, label: tx.countryLabel, value: 'Bangladesh'),
               SizedBox(height: 7.h),
-              _DetailsRow(icon: Icons.location_on, label: 'City', value: 'Dhaka'),
+              _DetailsRow(icon: Icons.location_on, label: tx.cityLabel, value: 'Dhaka'),
               SizedBox(height: 7.h),
-              _DetailsRow(icon: Icons.local_hospital, label: 'Hospital', value: 'Nur Hospital'),
+              _DetailsRow(icon: Icons.local_hospital, label: tx.hospitalLabel, value: 'Nur Hospital'),
               SizedBox(height: 12.h),
-              Text('Why do you need blood?', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              Text(tx.whyNeedBloodTitle, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               SizedBox(height: 8.h),
               Text(
                 'sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis expedita',
@@ -91,7 +93,7 @@ class BloodRequestDetailsPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => ChatPage(title: 'Cameron Williamson'),
+                        builder: (_) => const ChatPage(title: 'Cameron Williamson'),
                       ),
                     );
                   },
@@ -100,7 +102,7 @@ class BloodRequestDetailsPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   ),
-                  child: Text('Chat Now', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+                  child: Text(tx.chatNow, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
                 ),
               ),
               SizedBox(height: 16.h),

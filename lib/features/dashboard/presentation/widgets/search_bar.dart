@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 
 class SearchBarHero extends StatelessWidget {
   const SearchBarHero({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     return Hero(
       tag: 'search-bar',
       child: Material(
@@ -24,7 +26,7 @@ class SearchBarHero extends StatelessWidget {
                 const Icon(Icons.search, color: Colors.black38),
                 SizedBox(width: 8.w),
                 Text(
-                  'Search Blood',
+                  tx.searchBlood,
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium

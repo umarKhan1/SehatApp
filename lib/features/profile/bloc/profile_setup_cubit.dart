@@ -156,7 +156,7 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
 
   Future<void> submit() async {
     if (!state.isValid) return;
-    emit(state.copyWith(submitting: true, error: null));
+    emit(state.copyWith(submitting: true, ));
     await Future<void>.delayed(const Duration(milliseconds: 400));
     emit(state.copyWith(submitting: false));
   }

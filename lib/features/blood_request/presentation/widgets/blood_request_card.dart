@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'blood_request_item.dart';
+import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_item.dart';
 
 class BloodRequestCard extends StatelessWidget {
   const BloodRequestCard({super.key, required this.item});

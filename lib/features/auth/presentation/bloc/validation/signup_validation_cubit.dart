@@ -86,7 +86,7 @@ class SignupValidationCubit extends Cubit<SignupValidationState> {
 
   Future<void> submit() async {
     if (!state.isValid) return;
-    emit(state.copyWith(submitting: true, error: null, success: false));
+    emit(state.copyWith(submitting: true,success: false));
     await Future<void>.delayed(const Duration(milliseconds: 500));
     emit(state.copyWith(submitting: false, success: true));
   }

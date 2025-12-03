@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/constants/app_images.dart';
-import 'package:sehatapp/core/constants/app_strings.dart';
+
 import 'package:sehatapp/core/theme/app_theme.dart';
 import 'package:sehatapp/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:sehatapp/features/onboarding/presentation/models/onboarding_item.dart';
 import 'package:sehatapp/features/onboarding/presentation/widgets/dots_indicator.dart';
 import 'package:sehatapp/features/onboarding/presentation/widgets/next_button.dart';
+import 'package:sehatapp/l10n/app_localizations.dart';
+
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -20,11 +22,11 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _controller = PageController();
 
-  final List<OnboardingItem> _items = [
-    OnboardingItem(image: AppImages.ob1, title: AppStrings.onboardingTitle1, desc: AppStrings.onboardingDesc1),
-    OnboardingItem(image: AppImages.ob2, title: AppStrings.onboardingTitle2, desc: AppStrings.onboardingDesc2),
-    OnboardingItem(image: AppImages.ob3, title: AppStrings.onboardingTitle3, desc: AppStrings.onboardingDesc3),
-  ];
+  List<OnboardingItem> _localizedItems(BuildContext context) => [
+        OnboardingItem(image: AppImages.ob1, title: AppLocalizations.of(context)!.onboardingTitle1, desc: AppLocalizations.of(context)!.onboardingDesc1),
+        OnboardingItem(image: AppImages.ob2, title: AppLocalizations.of(context)!.onboardingTitle2, desc: AppLocalizations.of(context)!.onboardingDesc2),
+        OnboardingItem(image: AppImages.ob3, title: AppLocalizations.of(context)!.onboardingTitle3, desc: AppLocalizations.of(context)!.onboardingDesc3),
+      ];
 
   @override
   void dispose() {
@@ -34,6 +36,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final items = _localizedItems(context);
     return BlocBuilder<OnboardingCubit, OnboardingState>(
       builder: (context, state) {
         final int pageIndex = state.pageIndex;
@@ -44,10 +48,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               Positioned.fill(
                 child: PageView.builder(
                   controller: _controller,
-                  itemCount: _items.length,
-                  onPageChanged: (i) => context.read<OnboardingCubit>().setPage(i, _items.length),
+                  itemCount: items.length,
+                  onPageChanged: (i) => context.read<OnboardingCubit>().setPage(i, items.length),
                   itemBuilder: (context, i) {
-                    final item = _items[i];
+                    final item = items[i];
                     return Stack(
                       children: [
                         Positioned.fill(
@@ -62,9 +66,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           right: 16.w,
                           child: TextButton(
                             onPressed: () {
-                              // TODO: Navigate to next feature (e.g., auth/home)
-                            },
-                            child: const Text('Skip'),
+                               },
+                            child: Text(t.skip),
                           ),
                         ),
                       ],
@@ -76,7 +79,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               // Bottom card with content
               Align(
                 alignment: Alignment.bottomCenter,
-                child:  Container(
+                child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24.r),
@@ -95,26 +98,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _items[pageIndex].title,
+                          items[pageIndex].title,
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          _items[pageIndex].desc,
+                          items[pageIndex].desc,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black.withAlpha(140)),
                         ),
                         SizedBox(height: 16.h),
                         if (!state.isLast)
                           Row(
                             children: [
-                              DotsIndicator(length: _items.length, activeIndex: pageIndex),
+                              DotsIndicator(length: items.length, activeIndex: pageIndex),
                               const Spacer(),
                               NextButton(
                                 isContinue: state.isLast,
                                 onPressed: () {
                                   if (state.isLast) {
-                                    // TODO: Navigate to next feature (e.g., auth/home)
-                                  } else {
+                                   } else {
                                     _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
                                   }
                                 },
@@ -131,9 +133,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                               ),
                               onPressed: () {
-context.goNamed('login');
+                                context.goNamed('login');
                               },
-                              child:  Text(AppStrings.getStarted, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),),
+                              child: Text(t.getStarted, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
                             ),
                           ),
                       ],

@@ -25,7 +25,7 @@ class SettingsSwitchTile extends StatelessWidget {
           Expanded(child: Text(title, style: Theme.of(context).textTheme.bodyMedium)),
           Switch(
             value: value,
-            activeColor: Colors.redAccent,
+            activeThumbColor: Colors.redAccent,
             onChanged: onChanged,
           ),
         ],

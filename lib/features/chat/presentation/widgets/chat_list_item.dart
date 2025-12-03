@@ -15,7 +15,7 @@ class ChatListItem extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+       
         children: [
           leadingIcon ?? CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFFFEEEE), child: const Icon(Icons.bloodtype, color: Colors.redAccent)),
           SizedBox(width: 12.w),
@@ -40,7 +40,8 @@ class ChatListItem extends StatelessWidget {
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                               decoration: BoxDecoration(
-                                color: primary.withOpacity(0.1),
+                                color: primary.withValues(alpha: 
+                       0.1),
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(

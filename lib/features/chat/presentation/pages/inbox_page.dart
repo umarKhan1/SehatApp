@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../widgets/chat_list_item.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/chat/presentation/widgets/chat_list_item.dart';
 
 class InboxPage extends StatelessWidget {
   const InboxPage({super.key});
@@ -17,6 +18,8 @@ class InboxPage extends StatelessWidget {
         leadingIcon: CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFEDEDED), child: const Icon(Icons.person, color: Colors.black45))),
     ];
 
+    final tx = AppTexts.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -25,7 +28,7 @@ class InboxPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8.h),
-              Center(child: Text('Inbox', style: Theme.of(context).textTheme.titleLarge)),
+              Center(child: Text(tx.inboxTitle, style: Theme.of(context).textTheme.titleLarge)),
               SizedBox(height: 12.h),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
@@ -39,7 +42,7 @@ class InboxPage extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Expanded(
                       child: TextField(
-                        decoration: const InputDecoration.collapsed(hintText: 'Search name'),
+                        decoration: InputDecoration.collapsed(hintText: tx.searchNameHint),
                       ),
                     ),
                   ],
@@ -49,7 +52,7 @@ class InboxPage extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: dividerColor),
+                  separatorBuilder: (_, _) => Divider(height: 1, color: dividerColor),
                   itemBuilder: (context, i) => items[i],
                 ),
               ),

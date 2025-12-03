@@ -13,7 +13,17 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(seedColor: primary),
       primaryColor: primary,
       scaffoldBackgroundColor: Colors.white,
+      
       textTheme: GoogleFonts.poppinsTextTheme(),
+      popupMenuTheme: const PopupMenuThemeData(color: Colors.white),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        menuStyle: MenuStyle(backgroundColor: WidgetStatePropertyAll(Colors.white)),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      ),
     );
     return base.copyWith(
       primaryTextTheme: GoogleFonts.poppinsTextTheme(base.primaryTextTheme),
@@ -28,6 +38,15 @@ class AppTheme {
       primaryColor: primary,
       scaffoldBackgroundColor: const Color(0xFF0F0F0F),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      popupMenuTheme: const PopupMenuThemeData(color: Colors.white),
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        menuStyle: MenuStyle(backgroundColor: WidgetStatePropertyAll(Colors.white)),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      ),
     );
     return base.copyWith(
       primaryTextTheme: GoogleFonts.poppinsTextTheme(base.primaryTextTheme),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../widgets/message_bubble.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/chat/presentation/widgets/message_bubble.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key, required this.title});
@@ -15,6 +16,8 @@ class ChatPage extends StatelessWidget {
       {'text': 'sunt in culpa qui officia deserunt', 'isMe': true, 'isRead': false},
       {'text': 'sunt in culpa qui officia deserunt', 'isMe': false, 'isRead': false},
     ];
+
+    final tx = AppTexts.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -55,7 +58,7 @@ class ChatPage extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Type Message',
+                        hintText: tx.typeMessageHint,
                         filled: true,
                         fillColor: const Color(0xFFF1F3F6),
                         border: OutlineInputBorder(

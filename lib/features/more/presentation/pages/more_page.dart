@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../widgets/more_list_item.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/more/presentation/pages/faq_page.dart';
+import 'package:sehatapp/features/more/presentation/pages/settings_page.dart';
+import 'package:sehatapp/features/more/presentation/widgets/more_list_item.dart';
 import 'package:sehatapp/features/post_request/presentation/pages/create_request_page.dart';
-import 'faq_page.dart';
-import 'settings_page.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     final itemsData = [
-      {'icon': Icons.bloodtype, 'title': 'Create Request Blood'},
-      {'icon': Icons.add, 'title': 'Create Donot Blood'},
-      {'icon': Icons.apartment, 'title': 'Blood Donat Organization'},
-      {'icon': Icons.local_shipping, 'title': 'Ambulance'},
-      {'icon': Icons.inbox, 'title': 'Inbox'},
-      {'icon': Icons.volunteer_activism, 'title': 'Work as volunteer'},
-      {'icon': Icons.sell_outlined, 'title': 'Tags'},
-      {'icon': Icons.help_outline, 'title': 'FAQ'},
-      {'icon': Icons.article_outlined, 'title': 'Blog'},
-      {'icon': Icons.settings_outlined, 'title': 'Settings'},
-      {'icon': Icons.swap_horizontal_circle_outlined, 'title': 'Compatibility'},
-      {'icon': Icons.favorite_border, 'title': 'Donate Us'},
+      {'icon': Icons.bloodtype, 'title': tx.createRequestBlood},
+      {'icon': Icons.add, 'title': tx.createDonorBlood},
+      {'icon': Icons.apartment, 'title': tx.bloodDonateOrg},
+      {'icon': Icons.local_shipping, 'title': tx.ambulance},
+      {'icon': Icons.inbox, 'title': tx.inboxLabel},
+      {'icon': Icons.volunteer_activism, 'title': tx.volunteerWork},
+      {'icon': Icons.sell_outlined, 'title': tx.tags},
+      {'icon': Icons.help_outline, 'title': tx.faq},
+      {'icon': Icons.article_outlined, 'title': tx.blog},
+      {'icon': Icons.settings_outlined, 'title': tx.settings},
+      {'icon': Icons.swap_horizontal_circle_outlined, 'title': tx.compatibility},
+      {'icon': Icons.favorite_border, 'title': tx.donateUs},
     ];
 
     return Scaffold(
@@ -33,8 +35,8 @@ class MorePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8.h),
-              Center(child: Text('More', style: Theme.of(context).textTheme.titleLarge)),
-              SizedBox(height: 12.h),
+              Center(child: Text(tx.moreTitle, style: Theme.of(context).textTheme.titleLarge)),
+              SizedBox(height: 40.h),
               // Profile header card
               Stack(
                 clipBehavior: Clip.none,
@@ -47,7 +49,7 @@ class MorePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                 
                       children: [
                         SizedBox(height: 24.h),
                         Text(
@@ -88,7 +90,7 @@ class MorePage extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   itemCount: itemsData.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, i) {
                     final data = itemsData[i];
                     return MoreListItem(
@@ -99,11 +101,11 @@ class MorePage extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const CreateRequestPage()),
                           );
-                        } else if (data['title'] == 'FAQ') {
+                        } else if (data['title'] == tx.faq) {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const FaqPage()),
                           );
-                        } else if (data['title'] == 'Settings') {
+                        } else if (data['title'] == tx.settings) {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const SettingsPage()),
                           );

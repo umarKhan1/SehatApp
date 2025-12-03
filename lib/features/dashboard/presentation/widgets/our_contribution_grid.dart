@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
 
 class ContributionStat {
   ContributionStat({required this.value, required this.label, required this.bg, required this.valueColor});
@@ -15,10 +16,11 @@ class OurContributionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Our Contribution', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+        Text(tx.ourContributionTitle, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         SizedBox(height: 12.h),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -58,7 +60,7 @@ class _ContributionCard extends StatelessWidget {
       ),
       padding: EdgeInsets.all(16.w),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(

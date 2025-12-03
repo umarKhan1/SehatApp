@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
 import 'package:sehatapp/features/search/models/search_item.dart';
 import 'package:sehatapp/features/search/presentation/widgets/search_result_card.dart';
-import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -29,6 +30,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final tx = AppTexts.of(context);
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.fromLTRB(16.w, 16.h + MediaQuery.of(context).padding.top, 16.w, 16.h),
@@ -49,7 +51,7 @@ class _SearchPageState extends State<SearchPage> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Search',
+                      tx.searchTitle,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
@@ -76,9 +78,9 @@ class _SearchPageState extends State<SearchPage> {
                       Expanded(
                         child: TextField(
                           controller: _ctrl,
-                          decoration: const InputDecoration.collapsed(hintText: 'Search Blood'),
+                          decoration: InputDecoration.collapsed(hintText: tx.searchHint),
                           onChanged: (v) {
-                            setState(() {}); // mock filtering later
+                            setState(() {});
                           },
                         ),
                       ),
@@ -92,8 +94,8 @@ class _SearchPageState extends State<SearchPage> {
               text: TextSpan(
                 style: Theme.of(context).textTheme.bodyMedium,
                 children: [
-                  const TextSpan(text: 'Search Result for '),
-                  TextSpan(text: '"${_ctrl.text}"', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  TextSpan(text: tx.searchResultFor('')), // prefix only
+                  TextSpan(text: ' "${_ctrl.text}"', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
@@ -101,7 +103,7 @@ class _SearchPageState extends State<SearchPage> {
             Expanded(
               child: ListView.separated(
                 itemCount: _items.length,
-                separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                separatorBuilder: (_,_) => SizedBox(height: 12.h),
                 itemBuilder: (context, i) {
                   final item = _items[i];
                   return SearchResultCard(
