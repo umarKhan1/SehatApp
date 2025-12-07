@@ -7,7 +7,18 @@ import 'package:sehatapp/features/auth/data/user_repository.dart';
 
 class ChatState {
   static const _keep = Object();
-  const ChatState({this.loading = false, this.error, this.conversationId, this.otherUid, this.messages = const [], this.typingOther = false, this.lastReadAtOther, this.replyToMessageId, this.replyPreviewText});
+  const ChatState({
+    this.loading = false,
+    this.error,
+    this.conversationId,
+    this.otherUid,
+    this.messages = const [],
+    this.typingOther = false,
+    this.lastReadAtOther,
+    this.replyToMessageId,
+    this.replyPreviewText,
+    this.highlightedMessageId,
+  });
   final bool loading;
   final String? error;
   final String? conversationId;
@@ -17,7 +28,19 @@ class ChatState {
   final DateTime? lastReadAtOther;
   final String? replyToMessageId;
   final String? replyPreviewText;
-  ChatState copyWith({bool? loading, String? error, String? conversationId, String? otherUid, List<MessageItem>? messages, bool? typingOther, DateTime? lastReadAtOther, Object? replyToMessageId = _keep, Object? replyPreviewText = _keep}) =>
+  final String? highlightedMessageId;
+  ChatState copyWith({
+    bool? loading,
+    String? error,
+    String? conversationId,
+    String? otherUid,
+    List<MessageItem>? messages,
+    bool? typingOther,
+    DateTime? lastReadAtOther,
+    Object? replyToMessageId = _keep,
+    Object? replyPreviewText = _keep,
+    Object? highlightedMessageId = _keep,
+  }) =>
       ChatState(
         loading: loading ?? this.loading,
         error: error,
@@ -28,6 +51,7 @@ class ChatState {
         lastReadAtOther: lastReadAtOther ?? this.lastReadAtOther,
         replyToMessageId: replyToMessageId == _keep ? this.replyToMessageId : replyToMessageId as String?,
         replyPreviewText: replyPreviewText == _keep ? this.replyPreviewText : replyPreviewText as String?,
+        highlightedMessageId: highlightedMessageId == _keep ? this.highlightedMessageId : highlightedMessageId as String?,
       );
 }
 
@@ -38,6 +62,7 @@ class ChatCubit extends Cubit<ChatState> {
   StreamSubscription<List<MessageItem>>? _sub;
   StreamSubscription? _convSub;
   bool _sending = false;
+  Timer? _highlightTimer;
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
@@ -93,6 +118,7 @@ class ChatCubit extends Cubit<ChatState> {
           messages: merged,
           replyToMessageId: _replyToMessageId,
           replyPreviewText: _replyPreviewText,
+          highlightedMessageId: state.highlightedMessageId,
         ));
       },
       onError: (e) => emit(state.copyWith(loading: false, error: e.toString())),
@@ -107,7 +133,12 @@ class ChatCubit extends Cubit<ChatState> {
       final ts = lastReadMap[other];
       DateTime? dt;
       if (ts is Timestamp) dt = ts.toDate();
-      emit(state.copyWith(lastReadAtOther: dt, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+      emit(state.copyWith(
+        lastReadAtOther: dt,
+        replyToMessageId: _replyToMessageId,
+        replyPreviewText: _replyPreviewText,
+        highlightedMessageId: state.highlightedMessageId,
+      ));
     });
     // Mark messages as read when opening
     await repo.markRead(conversationId: convId, readerUid: uid);
@@ -206,8 +237,22 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() async {
+    _highlightTimer?.cancel();
     await _sub?.cancel();
     await _convSub?.cancel();
     return super.close();
+  }
+
+  void highlightMessage(String? id, {Duration duration = const Duration(milliseconds: 900)}) {
+    _highlightTimer?.cancel();
+    emit(state.copyWith(highlightedMessageId: id, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+    if (id != null) {
+      _highlightTimer = Timer(duration, () {
+        final current = state.highlightedMessageId;
+        if (current == id) {
+          emit(state.copyWith(highlightedMessageId: null, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+        }
+      });
+    }
   }
 }

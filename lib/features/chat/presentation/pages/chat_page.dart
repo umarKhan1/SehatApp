@@ -1,8 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:sehatapp/features/chat/bloc/chat_cubit.dart';
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
@@ -190,6 +190,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     currentUserName: currentName,
                     lastReadAtOther: state.lastReadAtOther,
                     scrollController: _scrollController,
+                    highlightedMessageId: state.highlightedMessageId,
                     onLongPressMessage: (message, isMe) {
                       _showAnimatedOverlay(
                         context,
@@ -197,6 +198,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                         preview: message.text,
                         isMe: isMe,
                       );
+                    },
+                    onHighlightRequest: (id) => context.read<ChatCubit>().highlightMessage(id),
+                    onSwipeReply: (message) {
+                      final preview = (message.text.isNotEmpty) ? message.text : 'Message';
+                      context.read<ChatCubit>().startReply(messageId: message.id, preview: preview);
+                      context.read<ChatCubit>().highlightMessage(message.id);
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom(animated: true));
                     },
                   );
                 },

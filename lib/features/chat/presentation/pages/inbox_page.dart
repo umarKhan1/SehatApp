@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
-import 'package:sehatapp/features/chat/presentation/widgets/chat_list_item.dart';
 import 'package:sehatapp/features/chat/bloc/inbox_cubit.dart';
+import 'package:sehatapp/features/chat/presentation/widgets/chat_list_item.dart';
 
 class InboxPage extends StatefulWidget {
   const InboxPage({super.key});
