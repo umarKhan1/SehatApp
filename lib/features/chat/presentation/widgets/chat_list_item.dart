@@ -11,13 +11,12 @@ class ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final primary = const Color(0xFF1DB954); // green accent for unread badge
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
       child: Row(
-       
         children: [
-          leadingIcon ?? CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFFFEEEE), child: const Icon(Icons.bloodtype, color: Colors.redAccent)),
+          leadingIcon ?? CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFEDEDED), child: const Icon(Icons.person, color: Colors.black45)),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -26,42 +25,43 @@ class ChatListItem extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (unreadCount > 0) ...[
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 
-                       0.1),
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              child: Text(
-                                '$unreadCount',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: primary, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-                        ],
+                      child: Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     SizedBox(width: 8.w),
-                    Text(time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45)),
+                    Text(time, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
                   ],
                 ),
                 SizedBox(height: 4.h),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (unreadCount > 0) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        width: 22.w,
+                        height: 22.w,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

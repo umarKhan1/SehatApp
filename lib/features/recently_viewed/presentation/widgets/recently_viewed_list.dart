@@ -2,11 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RecentlyViewedItem {
-  RecentlyViewedItem({required this.title, required this.hospital, required this.date, required this.bloodGroup});
+  RecentlyViewedItem({
+    required this.id,
+    required this.title,
+    required this.hospital,
+    required this.date,
+    required this.bloodGroup,
+    this.mobile,
+    this.bags,
+    this.country,
+    this.city,
+  });
+  final String id;
   final String title;
   final String hospital;
   final String date;
   final String bloodGroup;
+  final String? mobile;
+  final String? bags;
+  final String? country;
+  final String? city;
 }
 
 class RecentlyViewedList extends StatelessWidget {
@@ -19,8 +34,8 @@ class RecentlyViewedList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Recently Viewed', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        SizedBox(height: 12.h),
+        // Removed header text
+        // SizedBox(height: 12.h),
         ...items.map((e) => Padding(
               padding: EdgeInsets.only(bottom: 12.h),
               child: _RecentCard(item: e, onTap: () => onItemTap?.call(e)),
@@ -73,8 +88,9 @@ class _RecentCard extends StatelessWidget {
                   Row(children: [
                     const Icon(Icons.local_hospital, color: Colors.redAccent),
                     SizedBox(width: 8.w),
-                    Text('Hospital Name', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
+                    Text(item.hospital, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
                   ]),
+              
                   SizedBox(height: 8.h),
                   Row(children: [
                     const Icon(Icons.access_time, color: Colors.redAccent),

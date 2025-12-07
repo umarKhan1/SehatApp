@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
-import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
+import 'package:sehatapp/features/recently_viewed/bloc/recently_viewed_cubit.dart';
+import 'package:sehatapp/features/search/bloc/search_cubit.dart';
 import 'package:sehatapp/features/search/models/search_item.dart';
+import 'package:sehatapp/features/search/presentation/widgets/empty_search_view.dart';
 import 'package:sehatapp/features/search/presentation/widgets/search_result_card.dart';
 
 class SearchPage extends StatefulWidget {
@@ -13,19 +19,33 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _ctrl = TextEditingController(text: 'B+ Blood');
+  final TextEditingController _ctrl = TextEditingController();
+  Timer? _debounce;
 
-  final List<SearchItem> _items = const [
-    SearchItem(type: SearchType.need, title: 'Emergency B+ Blood Needed', subtitle: 'Hospital Name', date: '12 Feb 2022', bloodGroup: 'B+'),
-    SearchItem(type: SearchType.need, title: 'Emergency B+ Blood Needed', subtitle: 'Hospital Name', date: '12 Feb 2022', bloodGroup: 'B+'),
-    SearchItem(type: SearchType.need, title: 'Emergency B+ Blood Needed', subtitle: 'Hospital Name', date: '12 Feb 2022', bloodGroup: 'B+'),
-    SearchItem(type: SearchType.person, title: 'Cameron Williamson', subtitle: '+88 01818 121212', bloodGroup: 'B+'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Clear previous search state and input when entering the page
+    _ctrl.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<SearchCubit>().clear();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _ctrl.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      context.read<SearchCubit>().search(v);
+    });
   }
 
   @override
@@ -43,8 +63,6 @@ class _SearchPageState extends State<SearchPage> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
-                    // Navigate back to dashboard explicitly
-                    // ignore: use_build_context_synchronously
                     Navigator.of(context).pop();
                   },
                 ),
@@ -60,7 +78,6 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
             SizedBox(height: 12.h),
-            // Search bar with hero animation
             Hero(
               tag: 'search-bar',
               child: Material(
@@ -79,9 +96,7 @@ class _SearchPageState extends State<SearchPage> {
                         child: TextField(
                           controller: _ctrl,
                           decoration: InputDecoration.collapsed(hintText: tx.searchHint),
-                          onChanged: (v) {
-                            setState(() {});
-                          },
+                          onChanged: _onQueryChanged,
                         ),
                       ),
                     ],
@@ -90,36 +105,56 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
             SizedBox(height: 16.h),
-            RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyMedium,
-                children: [
-                  TextSpan(text: tx.searchResultFor('')), // prefix only
-                  TextSpan(text: ' "${_ctrl.text}"', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
-                ],
-              ),
+            BlocBuilder<SearchCubit, SearchState>(
+              builder: (context, state) {
+                final q = state.query.trim();
+                return RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: [
+                      TextSpan(text: tx.searchResultFor('')), // prefix only
+                      TextSpan(text: q.isEmpty ? '' : ' "$q"', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                );
+              },
             ),
-            SizedBox(height: 12.h),
+ 
             Expanded(
-              child: ListView.separated(
-                itemCount: _items.length,
-                separatorBuilder: (_,_) => SizedBox(height: 12.h),
-                itemBuilder: (context, i) {
-                  final item = _items[i];
-                  return SearchResultCard(
-                    item: item,
-                    onTap: () {
-                      if (item.type == SearchType.need) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => BloodRequestDetailsPage(
-                              title: item.title,
-                              bloodGroup: item.bloodGroup,
-                            ),
-                          ),
+              child: BlocBuilder<SearchCubit, SearchState>(
+                builder: (context, state) {
+                  final items = state.results;
+                  final hasQuery = state.query.trim().isNotEmpty;
+                  if (state.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!hasQuery) {
+                    // Initial screen shows the empty lottie centered
+                    return const EmptySearchView();
+                  }
+                  if (hasQuery && items.isEmpty) {
+                    return const EmptySearchView();
+                  }
+                  return AnimatedSwitcher(
+                    duration: const Duration(microseconds: 500),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    child: ListView.separated(
+                      key: ValueKey('list-${state.query}-${items.length}'),
+                      itemCount: items.length,
+                      separatorBuilder: (_,_) => SizedBox(height: 8.h),
+                      itemBuilder: (context, i) {
+                        final item = items[i];
+                        final map = item.toMap();
+                        return SearchResultCard(
+                          item: SearchItem.fromPost(map),
+                          onTap: () {
+                            context.read<RecentlyViewedCubit>().addViewed(map);
+                            context.pushNamed('bloodRequestDetails', extra: map);
+                          },
                         );
-                      }
-                    },
+                      },
+                    ),
                   );
                 },
               ),

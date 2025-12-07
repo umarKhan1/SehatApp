@@ -233,6 +233,20 @@ class AppTexts {
     return 'Our Contribution';
   }
 
+  // New: Recent posts section
+  String get recentPostsTitle {
+    if (isHi) return 'हाल की पोस्ट्स';
+    if (isAr) return 'المنشورات الحديثة';
+    if (isUr) return 'حالیہ پوسٹس';
+    return 'Recent Posts';
+  }
+  String get noPostsFound {
+    if (isHi) return 'कोई पोस्ट नहीं मिली';
+    if (isAr) return 'لا توجد منشورات';
+    if (isUr) return 'کوئی پوسٹ نہیں ملی';
+    return 'No posts found';
+  }
+
   // Blood request details
   String get postDetailsTitle {
     if (isHi) return 'पोस्ट विवरण';

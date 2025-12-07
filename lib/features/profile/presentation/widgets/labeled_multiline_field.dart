@@ -24,7 +24,10 @@ class _LabeledMultilineFieldState extends State<LabeledMultilineField> {
   @override
   void didUpdateWidget(covariant LabeledMultilineField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialText != _controller.text) {
+    // Only update the controller when the initial text prop truly changed
+    // and differs from the current controller value. This avoids clearing
+    // user input on normal rebuilds when initialText is a constant.
+    if (oldWidget.initialText != widget.initialText && widget.initialText != _controller.text) {
       _controller.value = TextEditingValue(
         text: widget.initialText,
         selection: TextSelection.collapsed(offset: widget.initialText.length),

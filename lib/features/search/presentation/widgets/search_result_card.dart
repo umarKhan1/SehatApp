@@ -38,23 +38,26 @@ class SearchResultCard extends StatelessWidget {
                   Text(item.title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
                   SizedBox(height: 6.h),
                   if (item.type == SearchType.need) ...[
-                    Row(children: [
-                      const Icon(Icons.local_hospital, color: Colors.redAccent, size: 16),
-                      SizedBox(width: 6.w),
-                      Text(item.subtitle ?? 'Hospital Name', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                    ]),
+                    if ((item.subtitle ?? '').isNotEmpty)
+                      Row(children: [
+                        const Icon(Icons.local_hospital, color: Colors.redAccent, size: 16),
+                        SizedBox(width: 6.w),
+                        Expanded(child: Text(item.subtitle!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54))),
+                      ]),
                     SizedBox(height: 6.h),
-                    Row(children: [
-                      const Icon(Icons.access_time, color: Colors.redAccent, size: 16),
-                      SizedBox(width: 6.w),
-                      Text(item.date ?? '12 Feb 2022', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                    ]),
+                    if ((item.date ?? '').isNotEmpty)
+                      Row(children: [
+                        const Icon(Icons.access_time, color: Colors.redAccent, size: 16),
+                        SizedBox(width: 6.w),
+                        Expanded(child: Text(item.date!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54))),
+                      ]),
                   ] else ...[
-                    Row(children: [
-                      const Icon(Icons.phone, color: Colors.redAccent, size: 16),
-                      SizedBox(width: 6.w),
-                      Text(item.subtitle ?? '', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54)),
-                    ]),
+                    if ((item.subtitle ?? '').isNotEmpty)
+                      Row(children: [
+                        const Icon(Icons.phone, color: Colors.redAccent, size: 16),
+                        SizedBox(width: 6.w),
+                        Expanded(child: Text(item.subtitle!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54))),
+                      ]),
                   ]
                 ],
               ),

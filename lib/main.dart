@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -7,6 +8,7 @@ import 'package:sehatapp/core/localization/app_locale_cubit.dart';
 import 'package:sehatapp/core/providers/app_providers.dart';
 import 'package:sehatapp/core/router/app_router.dart';
 import 'package:sehatapp/core/theme/app_theme.dart';
+import 'package:sehatapp/firebase_options.dart';
 import 'package:sehatapp/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +17,10 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final code = prefs.getString('app_locale_code') ?? 'en';
   final initialLocale = Locale(code);
+  
+await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform
+);
   runApp(MyApp(initialLocale: initialLocale));
 }
 
@@ -32,7 +38,7 @@ class MyApp extends StatelessWidget {
             return MaterialApp.router(
               title: AppStrings.appName,
               theme: AppTheme.light,
-              darkTheme: AppTheme.dark,
+              darkTheme: AppTheme.light,
               routerConfig: appRouter,
               locale: locale,
               supportedLocales: const [

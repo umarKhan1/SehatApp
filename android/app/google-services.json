@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "777718294130",
+    "project_id": "sehatapp-c0c8b",
+    "storage_bucket": "sehatapp-c0c8b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:777718294130:android:c9257d8a3b658abdbf84eb",
+        "android_client_info": {
+          "package_name": "com.example.sehatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "777718294130-p3ugfcd4io10gsdh04jt830n9437e1kn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5V76aZ5ubYRAGRrSzCONsW-xuaKAlDOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "777718294130-p3ugfcd4io10gsdh04jt830n9437e1kn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

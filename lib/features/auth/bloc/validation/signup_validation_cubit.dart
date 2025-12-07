@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sehatapp/features/auth/bloc/signup/signup_cubit.dart';
 
 class SignupValidationState {
   const SignupValidationState({
@@ -53,7 +54,8 @@ class SignupValidationState {
 }
 
 class SignupValidationCubit extends Cubit<SignupValidationState> {
-  SignupValidationCubit() : super(const SignupValidationState());
+  SignupValidationCubit(this.signupCubit) : super(const SignupValidationState());
+  final SignupCubit signupCubit;
 
   void onNameChanged(String value) => _recalc(name: value);
   void onEmailChanged(String value) => _recalc(email: value);
@@ -69,7 +71,7 @@ class SignupValidationCubit extends Cubit<SignupValidationState> {
       email: email,
       password: password,
       confirmPassword: confirmPassword,
-      success: false, // clear prior success on input change
+      success: false,
     );
     emit(next.copyWith(isValid: _validate(next)));
   }
@@ -85,8 +87,12 @@ class SignupValidationCubit extends Cubit<SignupValidationState> {
 
   Future<void> submit() async {
     if (!state.isValid) return;
-    emit(state.copyWith(submitting: true,  success: false));
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    emit(state.copyWith(submitting: false, success: true));
+    emit(state.copyWith(submitting: true, success: false));
+    try {
+      await signupCubit.signUp(name: state.name.trim(), email: state.email.trim(), password: state.password.trim());
+      emit(state.copyWith(submitting: false, success: true));
+    } catch (e) {
+      emit(state.copyWith(submitting: false, success: false, error: e.toString()));
+    }
   }
 }

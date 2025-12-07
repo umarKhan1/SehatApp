@@ -30,6 +30,8 @@ class ProfileSetupStep2Page extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // When this page is shown directly (e.g., after login), ensure step=2
+    context.read<ProfileSetupCubit>().enterStep2();
     final tx = AppTexts.of(context);
     return PopScope(
       onPopInvokedWithResult: (didPop, result) async {

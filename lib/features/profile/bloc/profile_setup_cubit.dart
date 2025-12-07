@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sehatapp/features/auth/data/auth_repository.dart';
+import 'package:sehatapp/features/auth/data/user_repository.dart';
 
 class ProfileSetupState {
   const ProfileSetupState({
@@ -76,7 +78,9 @@ class ProfileSetupState {
 }
 
 class ProfileSetupCubit extends Cubit<ProfileSetupState> {
-  ProfileSetupCubit() : super(const ProfileSetupState());
+  ProfileSetupCubit({required this.auth, required this.users}) : super(const ProfileSetupState());
+  final AuthRepository auth;
+  final UserRepository users;
 
   void onNameChanged(String v) => _recalc(name: v);
   void onPhoneChanged(String v) => _recalc(phone: v);
@@ -94,8 +98,18 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
   void onWantToDonateChanged(bool v) => _recalc(wantToDonate: v);
   void onAboutChanged(String v) => _recalc(about: v);
 
-  void nextStep() {
+  Future<void> nextStep() async {
     if (state.step == 1 && _validateStep1(state)) {
+      final uid = auth.currentUser?.uid;
+      if (uid != null) {
+        await users.saveStep1(uid,
+          name: state.name.trim(),
+          phone: state.phone.trim(),
+          bloodGroup: state.bloodGroup.trim(),
+          country: state.country.trim(),
+          city: state.city.trim(),
+        );
+      }
       emit(state.copyWith(step: 2, isValid: _validateStep2(state)));
     }
   }
@@ -108,6 +122,12 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
     } else {
       emit(state.copyWith(step: 1, isValid: _validateStep1(state)));
     }
+  }
+
+  void enterStep2() {
+    final next = state.copyWith(step: 2);
+    final valid = _validateStep2(next);
+    emit(next.copyWith(isValid: valid));
   }
 
   bool _validateStep1(ProfileSetupState s) {
@@ -156,9 +176,22 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
 
   Future<void> submit() async {
     if (!state.isValid) return;
-    emit(state.copyWith(submitting: true, ));
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    emit(state.copyWith(submitting: false));
+    emit(state.copyWith(submitting: true));
+    try {
+      final uid = auth.currentUser?.uid;
+      if (uid == null) throw Exception('Not authenticated');
+      await users.completeProfile(uid, {
+        'photoUrl': state.photoUrl,
+        'dob': state.dob?.toIso8601String(),
+        'gender': state.gender.trim(),
+        'wantToDonate': state.wantToDonate,
+        'about': state.about.trim(),
+        'age': state.age,
+      });
+      emit(state.copyWith(submitting: false));
+    } catch (e) {
+      emit(state.copyWith(submitting: false, error: e.toString()));
+    }
   }
 
   int _calculateAge(DateTime dob) {

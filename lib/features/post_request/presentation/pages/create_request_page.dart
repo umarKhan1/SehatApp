@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sehatapp/core/constants/app_options.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/post_request/bloc/create_post_cubit.dart';
+import 'package:sehatapp/features/post_request/bloc/create_request_cubit.dart';
+import 'package:sehatapp/features/post_request/data/post_repository.dart';
 import 'package:sehatapp/features/profile/presentation/widgets/labeled_dropdown.dart';
 import 'package:sehatapp/features/profile/presentation/widgets/labeled_multiline_field.dart';
-import 'package:sehatapp/features/post_request/bloc/create_request_cubit.dart';
 
 class CreateRequestPage extends StatefulWidget {
   const CreateRequestPage({super.key});
@@ -16,45 +18,67 @@ class CreateRequestPage extends StatefulWidget {
 }
 
 class _CreateRequestPageState extends State<CreateRequestPage> {
+  // Controllers for simple clearing after submit
+  final _nameCtrl = TextEditingController();
+  final _bagsCtrl = TextEditingController();
+  final _hospitalCtrl = TextEditingController();
+  final _contactPersonCtrl = TextEditingController();
+  final _mobileCtrl = TextEditingController();
+  int _clearTick = 0; // used to rebuild multiline widget
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _bagsCtrl.dispose();
+    _hospitalCtrl.dispose();
+    _contactPersonCtrl.dispose();
+    _mobileCtrl.dispose();
+    super.dispose();
+  }
+
   void _showCupertinoDatePicker(BuildContext context) {
+    final parentCtx = context;
     final tx = AppTexts.of(context);
     showCupertinoModalPopup(
       context: context,
-      builder: (ctx) {
-        return Container(
-          height: 260,
-          color: Colors.white,
-          child: Column(
-            children: [
-              SizedBox(
-                height: 44,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(tx.cancel)),
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: Text(tx.save),
-                    ),
-                  ],
+      builder: (modalCtx) {
+        return BlocProvider.value(
+          value: parentCtx.read<CreateRequestCubit>(),
+          child: Container(
+            height: 260,
+            color: Colors.white,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 44,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(onPressed: () => Navigator.of(modalCtx).pop(), child: Text(tx.cancel)),
+                      TextButton(
+                        onPressed: () => Navigator.of(modalCtx).pop(),
+                        child: Text(tx.save),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: BlocBuilder<CreateRequestCubit, CreateRequestState>(
-                  builder: (context, state) {
-                    return CupertinoDatePicker(
-                      mode: CupertinoDatePickerMode.date,
-                      initialDateTime: state.date ?? DateTime.now(),
-                      maximumDate: DateTime.now(),
-                      onDateTimeChanged: (d) {
-                        context.read<CreateRequestCubit>().setDate(d);
-                      },
-                    );
-                  },
+                const Divider(height: 1),
+                Expanded(
+                  child: BlocBuilder<CreateRequestCubit, CreateRequestState>(
+                    builder: (context, state) {
+                      return CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.date,
+                        initialDateTime: state.date ?? DateTime.now(),
+                        maximumDate: DateTime.now(),
+                        onDateTimeChanged: (d) {
+                          context.read<CreateRequestCubit>().setDate(d);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -63,11 +87,18 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
 
   List<String> _cities(String? country) => country == null ? [] : (AppOptions.citiesByCountry[country] ?? []);
 
+  void _showError(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tx = AppTexts.of(context);
-    return BlocProvider(
-      create: (_) => CreateRequestCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => CreateRequestCubit()),
+        BlocProvider(create: (_) => CreatePostCubit(repo: PostRepository())),
+      ],
       child: Scaffold(
         body: SafeArea(
           child: Padding(
@@ -96,6 +127,8 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             Text(tx.nameLabel, style: Theme.of(context).textTheme.bodyMedium),
                             SizedBox(height: 8.h),
                             TextField(
+                              controller: _nameCtrl,
+                              onChanged: context.read<CreateRequestCubit>().onNameChanged,
                               decoration: InputDecoration(
                                 hintText: tx.nameHint,
                                 filled: true,
@@ -109,6 +142,7 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             SizedBox(height: 12.h),
                             // Select Group (Blood type)
                             LabeledDropdown<String>(
+                              key: ValueKey('bg-$_clearTick'),
                               label: tx.selectGroupLabel,
                               value: state.bloodGroup,
                               items: AppOptions.bloodGroups,
@@ -121,6 +155,8 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             Text(tx.howManyBagsLabel, style: Theme.of(context).textTheme.bodyMedium),
                             SizedBox(height: 8.h),
                             TextField(
+                              controller: _bagsCtrl,
+                              onChanged: context.read<CreateRequestCubit>().onBagsChanged,
                               decoration: InputDecoration(
                                 hintText: tx.typeMessageHint,
                                 filled: true,
@@ -164,6 +200,8 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             Text(tx.hospitalLabel, style: Theme.of(context).textTheme.bodyMedium),
                             SizedBox(height: 8.h),
                             TextField(
+                              controller: _hospitalCtrl,
+                              onChanged: context.read<CreateRequestCubit>().onHospitalChanged,
                               decoration: InputDecoration(
                                 hintText: tx.hospitalName,
                                 filled: true,
@@ -177,10 +215,11 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             SizedBox(height: 12.h),
                             // Why do you need blood?
                             LabeledMultilineField(
+                              key: ValueKey(_clearTick),
                               label: tx.whyNeedBloodTitle,
                               hint: tx.aboutYourselfHint,
                               initialText: '',
-                              onChanged: (v) {},
+                              onChanged: context.read<CreateRequestCubit>().onReasonChanged,
                             ),
 
                             SizedBox(height: 12.h),
@@ -188,6 +227,8 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             Text(tx.contactPersonLabel, style: Theme.of(context).textTheme.bodyMedium),
                             SizedBox(height: 8.h),
                             TextField(
+                              controller: _contactPersonCtrl,
+                              onChanged: context.read<CreateRequestCubit>().onContactPersonChanged,
                               decoration: InputDecoration(
                                 hintText: tx.nameHint,
                                 filled: true,
@@ -203,7 +244,9 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             Text(tx.mobileNumberLabel, style: Theme.of(context).textTheme.bodyMedium),
                             SizedBox(height: 8.h),
                             TextField(
+                              controller: _mobileCtrl,
                               keyboardType: TextInputType.phone,
+                              onChanged: context.read<CreateRequestCubit>().onMobileChanged,
                               decoration: InputDecoration(
                                 hintText: tx.mobileNumberLabel,
                                 filled: true,
@@ -217,6 +260,7 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             SizedBox(height: 12.h),
                             // Country dropdown
                             LabeledDropdown<String>(
+                              key: ValueKey('country-$_clearTick'),
                               label: tx.countryLabel,
                               value: state.country,
                               items: AppOptions.countries,
@@ -227,6 +271,7 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             SizedBox(height: 12.h),
                             // City dropdown
                             LabeledDropdown<String>(
+                              key: ValueKey('city-$_clearTick'),
                               label: tx.cityLabel,
                               value: state.city,
                               items: cities,
@@ -235,17 +280,56 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                             ),
 
                             SizedBox(height: 20.h),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                                ),
-                                child: Text(AppTexts.of(context).getStarted, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
-                              ),
+                            BlocConsumer<CreatePostCubit, CreatePostState>(
+                              listener: (context, postState) {
+                                if (postState.postId != null && !postState.loading) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Post created')),
+                                  );
+                                  _nameCtrl.clear();
+                                  _bagsCtrl.clear();
+                                  _hospitalCtrl.clear();
+                                  _contactPersonCtrl.clear();
+                                  _mobileCtrl.clear();
+                                  setState(() { _clearTick++; });
+                                  context.read<CreateRequestCubit>().reset();
+                                }
+                                if (postState.error != null) {
+                                  _showError(context, postState.error!);
+                                }
+                              },
+                              builder: (context, postState) {
+                                final loading = postState.loading;
+                                final valid = state.isValid;
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: (!valid || loading) ? null : () {
+                                      final data = {
+                                        'name': state.name.trim(),
+                                        'bloodGroup': state.bloodGroup,
+                                        'bags': state.bags.trim(),
+                                        'date': state.date?.toIso8601String(),
+                                        'hospital': state.hospital.trim(),
+                                        'reason': state.reason.trim(),
+                                        'contactPerson': state.contactPerson.trim(),
+                                        'mobile': state.mobile.trim(),
+                                        'country': state.country,
+                                        'city': state.city,
+                                      };
+                                      context.read<CreatePostCubit>().submit(data);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: valid && !loading ? Colors.redAccent : Colors.redAccent.withOpacity(0.6),
+                                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                                    ),
+                                    child: loading
+                                      ? SizedBox(height: 20.w, width: 20.w, child: const CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+                                      : Text('Create Post', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+                                  ),
+                                );
+                              },
                             ),
                             SizedBox(height: 16.h),
                           ],

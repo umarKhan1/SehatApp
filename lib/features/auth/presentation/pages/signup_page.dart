@@ -71,8 +71,13 @@ class SignupPage extends StatelessWidget {
                     PrimaryButton(
                       label: t.signUp,
                       enabled: state.isValid && !state.submitting,
+                      loading: state.submitting,
                       onPressed: () => context.read<SignupValidationCubit>().submit(),
                     ),
+                    if (state.error != null) ...[
+                      SizedBox(height: 12.h),
+                      Text(state.error!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.red)),
+                    ],
                     SizedBox(height: 24.h),
                     Row(
                       children: [
