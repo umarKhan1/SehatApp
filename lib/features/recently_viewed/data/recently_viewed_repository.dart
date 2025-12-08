@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sehatapp/features/recently_viewed/models/recently_viewed_entry.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class IRecentlyViewedRepository {
   Future<List<RecentlyViewedEntry>> getAll(String uid);
@@ -28,7 +29,20 @@ class RecentlyViewedRepository implements IRecentlyViewedRepository {
       } else {
         return raw.toString();
       }
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
     } catch (_) {
       return raw.toString();
@@ -53,7 +67,9 @@ class RecentlyViewedRepository implements IRecentlyViewedRepository {
     final jsonStr = prefs.getString('$_keyPrefix$uid');
     if (jsonStr == null || jsonStr.isEmpty) return [];
     final List list = json.decode(jsonStr) as List;
-    return list.map((e) => RecentlyViewedEntry.fromMap(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => RecentlyViewedEntry.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -66,7 +82,12 @@ class RecentlyViewedRepository implements IRecentlyViewedRepository {
   Future<void> addItem(String uid, Map<String, dynamic> post) async {
     final prefs = await SharedPreferences.getInstance();
     final items = await getAll(uid);
-    final id = (post['id'] ?? post['docId'] ?? post['uid'] ?? DateTime.now().millisecondsSinceEpoch.toString()).toString();
+    final id =
+        (post['id'] ??
+                post['docId'] ??
+                post['uid'] ??
+                DateTime.now().millisecondsSinceEpoch.toString())
+            .toString();
     final existingIndex = items.indexWhere((e) => e.id == id);
     final entry = RecentlyViewedEntry(
       id: id,
@@ -90,7 +111,10 @@ class RecentlyViewedRepository implements IRecentlyViewedRepository {
     if (items.length > maxItems) {
       items.removeRange(maxItems, items.length);
     }
-    await prefs.setString('$_keyPrefix$uid', json.encode(items.map((e) => e.toMap()).toList()));
+    await prefs.setString(
+      '$_keyPrefix$uid',
+      json.encode(items.map((e) => e.toMap()).toList()),
+    );
   }
 
   @override

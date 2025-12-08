@@ -109,6 +109,8 @@ class ChatCubit extends Cubit<ChatState> {
             reactions: reactions,
             replyToMessageId: m.replyToMessageId,
             replyPreviewText: m.replyPreviewText,
+            type: m.type,
+            metadata: m.metadata,
           );
         }).toList();
         // Always persist reply state using private fields
@@ -209,6 +211,8 @@ class ChatCubit extends Cubit<ChatState> {
         reactions: newReactions,
         replyToMessageId: target.replyToMessageId,
         replyPreviewText: target.replyPreviewText,
+        type: target.type,
+        metadata: target.metadata,
       );
       emit(state.copyWith(messages: currentMessages, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
     }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import 'package:sehatapp/core/localization/app_locale_cubit.dart';
 import 'package:sehatapp/core/providers/app_providers.dart';
 import 'package:sehatapp/core/router/app_router.dart';
 import 'package:sehatapp/core/theme/app_theme.dart';
+import 'package:sehatapp/features/call/presentation/widgets/call_listener.dart';
 import 'package:sehatapp/firebase_options.dart';
 import 'package:sehatapp/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,10 +19,24 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final code = prefs.getString('app_locale_code') ?? 'en';
   final initialLocale = Locale(code);
-  
-await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
-);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+
+  // Check if user should stay logged in
+  // If not explicitly set, sign out to prevent auto-login from cached credentials
+  final stayLoggedIn = prefs.getBool('stay_logged_in') ?? false;
+  if (!stayLoggedIn) {
+    try {
+      await FirebaseAuth.instance.signOut();
+      debugPrint('[Main] Signed out user - no active session flag');
+    } catch (e) {
+      debugPrint('[Main] Error signing out: $e');
+    }
+  }
+
   runApp(MyApp(initialLocale: initialLocale));
 }
 
@@ -42,8 +58,8 @@ class MyApp extends StatelessWidget {
               routerConfig: appRouter,
               locale: locale,
               supportedLocales: const [
-                Locale('en'), 
-                Locale('hi'), 
+                Locale('en'),
+                Locale('hi'),
                 Locale('ar'),
                 Locale('ur'),
               ],
@@ -53,6 +69,9 @@ class MyApp extends StatelessWidget {
                 GlobalCupertinoLocalizations.delegate,
                 AppLocalizations.delegate,
               ],
+              builder: (context, child) {
+                return CallListener(child: child ?? const SizedBox.shrink());
+              },
             );
           },
         ),
@@ -60,4 +79,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

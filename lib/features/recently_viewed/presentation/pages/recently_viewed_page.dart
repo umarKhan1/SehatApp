@@ -33,10 +33,16 @@ class _RecentlyViewedPageState extends State<RecentlyViewedPage> {
             children: [
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.pop(),
+                  ),
                   Expanded(
                     child: Center(
-                      child: Text('Recently viewed', style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        'Recently viewed',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
                   ),
                   SizedBox(width: 48.w),
@@ -51,37 +57,47 @@ class _RecentlyViewedPageState extends State<RecentlyViewedPage> {
                       return Center(child: Text('No recently viewed'));
                     }
                     // Scrollable list to avoid overflow
-                    final uiItems = items.map((p) => RecentlyViewedItem(
-                      id: (p['id'] ?? '') as String,
-                      title: (p['name'] ?? '') as String,
-                      hospital: (p['hospital'] ?? '') as String,
-                      date: (p['date'] ?? '') as String,
-                      bloodGroup: (p['bloodGroup'] ?? '') as String,
-                      mobile: (p['mobile'] ?? '') as String?,
-                      bags: (p['bags'] ?? '') as String?,
-                      country: (p['country'] ?? '') as String?,
-                      city: (p['city'] ?? '') as String?,
-                    )).toList();
+                    final uiItems = items
+                        .map(
+                          (p) => RecentlyViewedItem(
+                            id: (p['id'] ?? '') as String,
+                            title: (p['name'] ?? '') as String,
+                            hospital: (p['hospital'] ?? '') as String,
+                            date: (p['date'] ?? '') as String,
+                            bloodGroup: (p['bloodGroup'] ?? '') as String,
+                            mobile: (p['mobile'] ?? '') as String?,
+                            bags: (p['bags'] ?? '') as String?,
+                            country: (p['country'] ?? '') as String?,
+                            city: (p['city'] ?? '') as String?,
+                          ),
+                        )
+                        .toList();
                     return ListView.separated(
                       itemCount: uiItems.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      separatorBuilder: (_, _) => SizedBox(height: 12.h),
                       itemBuilder: (context, i) {
                         final item = uiItems[i];
                         return RecentlyViewedList(
                           items: [item],
                           onItemTap: (tapped) {
-                            final full = items.firstWhere((e) => (e['id'] ?? '') == tapped.id, orElse: () => {
-                              'id': tapped.id,
-                              'name': tapped.title,
-                              'hospital': tapped.hospital,
-                              'date': tapped.date,
-                              'bloodGroup': tapped.bloodGroup,
-                              'mobile': tapped.mobile,
-                              'bags': tapped.bags,
-                              'country': tapped.country,
-                              'city': tapped.city,
-                            });
-                            context.pushNamed('bloodRequestDetails', extra: full);
+                            final full = items.firstWhere(
+                              (e) => (e['id'] ?? '') == tapped.id,
+                              orElse: () => {
+                                'id': tapped.id,
+                                'name': tapped.title,
+                                'hospital': tapped.hospital,
+                                'date': tapped.date,
+                                'bloodGroup': tapped.bloodGroup,
+                                'mobile': tapped.mobile,
+                                'bags': tapped.bags,
+                                'country': tapped.country,
+                                'city': tapped.city,
+                              },
+                            );
+                            context.pushNamed(
+                              'bloodRequestDetails',
+                              extra: full,
+                            );
                           },
                         );
                       },

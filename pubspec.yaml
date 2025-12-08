@@ -45,9 +45,14 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.2.3
   firebase_core: ^4.2.1
+  firebase_database: ^12.1.0
   firebase_auth: ^6.1.2
   lottie: ^3.3.2
   cloud_firestore: ^6.1.0
+  flutter_webrtc: ^1.2.1
+  audioplayers: ^6.5.1
+  flutter_ringtone_player: ^4.0.0+4
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +78,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animation/
+    - assets/ringtone/
 
   generate: true
 

@@ -1,16 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sehatapp/core/constants/app_images.dart';
+import 'package:sehatapp/core/localization/app_texts.dart';
+import 'package:sehatapp/features/blood_request/bloc/blood_request_cubit.dart';
 import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_card.dart';
 import 'package:sehatapp/features/blood_request/presentation/widgets/blood_request_item.dart';
-import 'package:sehatapp/features/blood_request/bloc/blood_request_cubit.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sehatapp/features/recently_viewed/bloc/recently_viewed_cubit.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class BloodRequestPage extends StatefulWidget {
   const BloodRequestPage({super.key, this.group});
@@ -27,7 +27,10 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
     // Start loading requests for the group
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uid = FirebaseAuth.instance.currentUser?.uid;
-      context.read<BloodRequestCubit>().start(bloodGroup: widget.group, excludeUid: uid);
+      context.read<BloodRequestCubit>().start(
+        bloodGroup: widget.group,
+        excludeUid: uid,
+      );
     });
   }
 
@@ -46,12 +49,26 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
         } else {
           return raw.toString();
         }
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
         return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
       } catch (_) {
         return raw.toString();
       }
     }
+
     final tx = AppTexts.of(context);
     return Scaffold(
       body: SafeArea(
@@ -62,8 +79,18 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
             children: [
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
-                  Expanded(child: Center(child: Text(tx.bloodRequestTitle, style: Theme.of(context).textTheme.titleLarge))),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.pop(),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        tx.bloodRequestTitle,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ),
                   SizedBox(width: 48.w),
                 ],
               ),
@@ -79,9 +106,16 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Lottie.asset(AppImages.bloodAnimation, width: 220.w),
+                            Lottie.asset(
+                              AppImages.bloodAnimation,
+                              width: 220.w,
+                            ),
                             SizedBox(height: 12.h),
-                            Text('No blood group found', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+                            Text(
+                              'No blood group found',
+                              style: Theme.of(context).textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       );
@@ -92,9 +126,16 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Lottie.asset(AppImages.bloodAnimation, width: 220.w),
+                            Lottie.asset(
+                              AppImages.bloodAnimation,
+                              width: 220.w,
+                            ),
                             SizedBox(height: 12.h),
-                            Text('No blood group found', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+                            Text(
+                              'No blood group found',
+                              style: Theme.of(context).textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       );
@@ -126,19 +167,37 @@ class _BloodRequestPageState extends State<BloodRequestPage> {
               SizedBox(height: 12.h),
               Center(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.redAccent),
                     borderRadius: BorderRadius.circular(24.r),
                     color: Colors.white,
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, 6))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(tx.bloodWithGroup(widget.group ?? 'B+'), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.redAccent, fontWeight: FontWeight.w700)),
+                      Text(
+                        tx.bloodWithGroup(widget.group ?? 'B+'),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       SizedBox(width: 8.w),
-                      const Icon(Icons.keyboard_arrow_up, color: Colors.redAccent),
+                      const Icon(
+                        Icons.keyboard_arrow_up,
+                        color: Colors.redAccent,
+                      ),
                     ],
                   ),
                 ),

@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'sehatapp-c0c8b.firebaseapp.com',
     storageBucket: 'sehatapp-c0c8b.firebasestorage.app',
     measurementId: 'G-K1EZ4KF25N',
+   // databaseURL: 'https://sehatapp-c0c8b-default-rtdb.firebaseio.com'
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,6 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '777718294130',
     projectId: 'sehatapp-c0c8b',
     storageBucket: 'sehatapp-c0c8b.firebasestorage.app',
+  //    databaseURL: 'https://sehatapp-c0c8b-default-rtdb.firebaseio.com'
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:777718294130:ios:5b2d6e01a3926036bf84eb',
     messagingSenderId: '777718294130',
     projectId: 'sehatapp-c0c8b',
+  //  databaseURL:  'https://sehatapp-c0c8b-default-rtdb.firebaseio.com/',
     storageBucket: 'sehatapp-c0c8b.firebasestorage.app',
     iosClientId: '777718294130-e1gp00qro101tih6hb2md504e5j5rfi8.apps.googleusercontent.com',
     iosBundleId: 'com.example.sehatapp',
@@ -73,6 +76,8 @@ class DefaultFirebaseOptions {
     appId: '1:777718294130:ios:5b2d6e01a3926036bf84eb',
     messagingSenderId: '777718294130',
     projectId: 'sehatapp-c0c8b',
+    
+    databaseURL: 'https://sehatapp-c0c8b-default-rtdb.firebaseio.com',
     storageBucket: 'sehatapp-c0c8b.firebasestorage.app',
     iosClientId: '777718294130-e1gp00qro101tih6hb2md504e5j5rfi8.apps.googleusercontent.com',
     iosBundleId: 'com.example.sehatapp',
@@ -83,6 +88,7 @@ class DefaultFirebaseOptions {
     appId: '1:777718294130:web:4e614292e0244442bf84eb',
     messagingSenderId: '777718294130',
     projectId: 'sehatapp-c0c8b',
+   // databaseURL: 'https://sehatapp-c0c8b-default-rtdb.firebaseio.com',
     authDomain: 'sehatapp-c0c8b.firebaseapp.com',
     storageBucket: 'sehatapp-c0c8b.firebasestorage.app',
     measurementId: 'G-ZE45R41EPR',

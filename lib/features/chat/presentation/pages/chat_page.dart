@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
-import 'package:sehatapp/features/chat/bloc/chat_cubit.dart';
+import 'package:sehatapp/features/call/data/call_repository_impl.dart';
+import 'package:sehatapp/features/call/domain/entities/call_session.dart';
+import 'package:sehatapp/features/call/presentation/cubit/call_cubit.dart';
+import 'package:sehatapp/features/call/presentation/pages/call_page.dart';
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
+import 'package:sehatapp/features/chat/presentation/cubit/chat_cubit.dart';
 import 'package:sehatapp/features/chat/presentation/widgets/message_actions_overlay.dart';
 import 'package:sehatapp/features/chat/presentation/widgets/message_input_bar.dart';
 import 'package:sehatapp/features/chat/presentation/widgets/message_list.dart';
@@ -22,7 +26,15 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
   final TextEditingController _ctrl = TextEditingController();
-  final List<String> _reactionEmojis = const ['👍', '❤️', '😂', '😮', '😢', '🙏', '😡'];
+  final List<String> _reactionEmojis = const [
+    '👍',
+    '❤️',
+    '😂',
+    '😮',
+    '😢',
+    '🙏',
+    '😡',
+  ];
 
   bool _typing = false;
   bool _hasScrolledOnce = false;
@@ -38,9 +50,15 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       final other = widget.otherUid;
       if (mounted && other != null && other.isNotEmpty) {
         await context.read<ChatCubit>().init(
-              otherUid: other,
-              otherName: widget.title,
-            );
+          otherUid: other,
+          otherName: widget.title,
+        );
+        // Auto-scroll to bottom after messages load
+        if (mounted) {
+          // Small delay to ensure messages are rendered
+          await Future.delayed(const Duration(milliseconds: 100));
+          _scrollToBottom();
+        }
       }
     });
   }
@@ -92,12 +110,22 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             scaleAnim: scaleAnim,
             fadeAnim: fadeAnim,
             onDismiss: _dismissOverlay,
-            onReact: (emoji) => context.read<ChatCubit>().react(messageId: messageId, emoji: emoji),
+            onReact: (emoji) => context.read<ChatCubit>().react(
+              messageId: messageId,
+              emoji: emoji,
+            ),
             onReply: () {
-              context.read<ChatCubit>().startReply(messageId: messageId, preview: preview);
-              WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom(animated: true));
+              context.read<ChatCubit>().startReply(
+                messageId: messageId,
+                preview: preview,
+              );
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _scrollToBottom(animated: true),
+              );
             },
-            onDelete: isMe ? () => context.read<ChatCubit>().deleteMessage(messageId) : null,
+            onDelete: isMe
+                ? () => context.read<ChatCubit>().deleteMessage(messageId)
+                : null,
           );
         },
       ),
@@ -115,6 +143,53 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _overlay = null;
     _overlayController?.dispose();
     _overlayController = null;
+  }
+
+  void _startCall({required bool video}) {
+    final target = widget.otherUid;
+    if (target == null || target.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot start call: missing recipient')),
+      );
+      return;
+    }
+    CallCubit? existingCubit;
+    try {
+      existingCubit = BlocProvider.of<CallCubit>(context);
+    } catch (_) {}
+
+    if (existingCubit != null) {
+      existingCubit.startOutgoing(
+        calleeUid: target,
+        calleeName: widget.title,
+        type: video ? CallType.video : CallType.audio,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: existingCubit!,
+            child: const CallPage(),
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => BlocProvider<CallCubit>(
+            create: (_) {
+              final chatRepo = RepositoryProvider.of<ChatRepository>(context);
+              return CallCubit(CallRepository(), chatRepo: chatRepo)
+                ..startOutgoing(
+                  calleeUid: target,
+                  calleeName: widget.title,
+                  type: video ? CallType.video : CallType.audio,
+                );
+            },
+            child: const CallPage(),
+          ),
+        ),
+      );
+    }
   }
 
   void _scrollToBottom({bool animated = false}) {
@@ -137,8 +212,6 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     _ctrl.dispose();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +236,20 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  SizedBox(width: 48.w),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.call),
+                        tooltip: 'Voice call',
+                        onPressed: () => _startCall(video: false),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.videocam),
+                        tooltip: 'Video call',
+                        onPressed: () => _startCall(video: true),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -181,7 +267,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     });
                   }
                   final currentUid = FirebaseAuth.instance.currentUser?.uid;
-                  final currentName = FirebaseAuth.instance.currentUser?.displayName;
+                  final currentName =
+                      FirebaseAuth.instance.currentUser?.displayName;
                   return ChatMessageList(
                     messages: state.messages,
                     title: widget.title,
@@ -199,12 +286,27 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                         isMe: isMe,
                       );
                     },
-                    onHighlightRequest: (id) => context.read<ChatCubit>().highlightMessage(id),
+                    onHighlightRequest: (id) =>
+                        context.read<ChatCubit>().highlightMessage(id),
                     onSwipeReply: (message) {
-                      final preview = (message.text.isNotEmpty) ? message.text : 'Message';
-                      context.read<ChatCubit>().startReply(messageId: message.id, preview: preview);
+                      final preview = (message.text.isNotEmpty)
+                          ? message.text
+                          : 'Message';
+                      context.read<ChatCubit>().startReply(
+                        messageId: message.id,
+                        preview: preview,
+                      );
                       context.read<ChatCubit>().highlightMessage(message.id);
-                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom(animated: true));
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _scrollToBottom(animated: true),
+                      );
+                    },
+                    onCallLogTap: (message) {
+                      final callData = message.metadata?['call'];
+                      if (callData != null) {
+                        final type = callData['type'] as String? ?? 'audio';
+                        _startCall(video: type == 'video');
+                      }
                     },
                   );
                 },
@@ -229,9 +331,13 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                 );
                 final myName = FirebaseAuth.instance.currentUser?.displayName;
                 final replyTitle = replyMsg.id.isNotEmpty
-                    ? (replyMsg.fromUid == currentUid ? (myName?.isNotEmpty == true ? myName! : 'You') : widget.title)
+                    ? (replyMsg.fromUid == currentUid
+                          ? (myName?.isNotEmpty == true ? myName! : 'You')
+                          : widget.title)
                     : widget.title;
-                final displayTitle = replyTitle.isEmpty ? widget.title : replyTitle;
+                final displayTitle = replyTitle.isEmpty
+                    ? widget.title
+                    : replyTitle;
                 return ReplyBar(
                   title: displayTitle,
                   preview: state.replyPreviewText ?? '',

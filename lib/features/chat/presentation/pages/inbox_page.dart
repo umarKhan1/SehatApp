@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
-import 'package:sehatapp/features/chat/bloc/inbox_cubit.dart';
+import 'package:sehatapp/features/chat/presentation/cubit/inbox_cubit.dart';
 import 'package:sehatapp/features/chat/presentation/widgets/chat_list_item.dart';
 
 class InboxPage extends StatefulWidget {
@@ -52,7 +52,12 @@ class _InboxPageState extends State<InboxPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8.h),
-              Center(child: Text(tx.inboxTitle, style: Theme.of(context).textTheme.titleLarge)),
+              Center(
+                child: Text(
+                  tx.inboxTitle,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
               SizedBox(height: 12.h),
               Expanded(
                 child: BlocBuilder<InboxCubit, InboxState>(
@@ -64,11 +69,18 @@ class _InboxPageState extends State<InboxPage> {
                     // Friendly error handling: do not display raw Firestore index URLs
                     if (state.error != null && state.error!.isNotEmpty) {
                       final err = state.error!;
-                      final isIndexError = err.contains('failed-precondition') || err.contains('requires an index');
+                      final isIndexError =
+                          err.contains('failed-precondition') ||
+                          err.contains('requires an index');
                       final message = isIndexError
                           ? 'No message yet'
                           : 'Something went wrong. Please try again later';
-                      return Center(child: Text(message, style: const TextStyle(color: Colors.red)));
+                      return Center(
+                        child: Text(
+                          message,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
                     }
 
                     final convs = state.conversations;
@@ -92,7 +104,11 @@ class _InboxPageState extends State<InboxPage> {
                     final filtered = _query.isEmpty
                         ? convs
                         : convs.where((c) {
-                            final name = (c.otherName.isNotEmpty ? c.otherName : c.otherUid).toLowerCase();
+                            final name =
+                                (c.otherName.isNotEmpty
+                                        ? c.otherName
+                                        : c.otherUid)
+                                    .toLowerCase();
                             return name.contains(_query.toLowerCase());
                           }).toList();
 
@@ -100,21 +116,28 @@ class _InboxPageState extends State<InboxPage> {
                       children: [
                         if (showSearch) ...[
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 12.h,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF5F6FA),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
-                            child: Row(children: [
-                              const Icon(Icons.search, color: Colors.black38),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchCtl,
-                                  decoration: InputDecoration.collapsed(hintText: tx.searchNameHint),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search, color: Colors.black38),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchCtl,
+                                    decoration: InputDecoration.collapsed(
+                                      hintText: tx.searchNameHint,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ]),
+                              ],
+                            ),
                           ),
                           SizedBox(height: 16.h),
                         ],
@@ -123,13 +146,18 @@ class _InboxPageState extends State<InboxPage> {
                               ? Center(child: Text('No messages found'))
                               : ListView.separated(
                                   itemCount: filtered.length,
-                                  separatorBuilder: (_, __) => Divider(height: 1, color: dividerColor),
+                                  separatorBuilder: (_, _) =>
+                                      Divider(height: 1, color: dividerColor),
                                   itemBuilder: (context, i) {
                                     final c = filtered[i];
-                                    final title = c.otherName.isEmpty ? c.otherUid : c.otherName;
+                                    final title = c.otherName.isEmpty
+                                        ? c.otherUid
+                                        : c.otherName;
                                     final subtitle = c.otherTyping
                                         ? 'typing…'
-                                        : (c.lastMessage.isEmpty ? 'No message yet' : c.lastMessage);
+                                        : (c.lastMessage.isEmpty
+                                              ? 'No message yet'
+                                              : c.lastMessage);
                                     final item = ChatListItem(
                                       title: title,
                                       subtitle: subtitle,
@@ -137,13 +165,24 @@ class _InboxPageState extends State<InboxPage> {
                                       unreadCount: c.unreadCount,
                                       leadingIcon: CircleAvatar(
                                         radius: 22.r,
-                                        backgroundColor: const Color(0xFFEDEDED),
-                                        child: const Icon(Icons.person, color: Colors.black45),
+                                        backgroundColor: const Color(
+                                          0xFFEDEDED,
+                                        ),
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: Colors.black45,
+                                        ),
                                       ),
                                     );
                                     return InkWell(
                                       onTap: () {
-                                        context.pushNamed('chat', extra: {'title': title, 'uid': c.otherUid});
+                                        context.pushNamed(
+                                          'chat',
+                                          extra: {
+                                            'title': title,
+                                            'uid': c.otherUid,
+                                          },
+                                        );
                                       },
                                       child: item,
                                     );

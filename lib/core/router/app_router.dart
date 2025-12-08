@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:sehatapp/core/navigation/navigator_service.dart';
 import 'package:sehatapp/features/auth/presentation/pages/login_page.dart';
 import 'package:sehatapp/features/auth/presentation/pages/signup_page.dart';
 import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
@@ -15,6 +16,7 @@ import 'package:sehatapp/features/shell/presentation/pages/shell_page.dart';
 import 'package:sehatapp/features/splash/presentation/splash_page.dart';
 
 final GoRouter appRouter = GoRouter(
+  navigatorKey: NavigatorService.navigatorKey,
   routes: <RouteBase>[
     GoRoute(
       path: '/',

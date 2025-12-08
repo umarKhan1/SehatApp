@@ -18,6 +18,7 @@ class ChatMessageList extends StatefulWidget {
     this.onSwipeReply,
     this.highlightedMessageId,
     this.onHighlightRequest,
+    this.onCallLogTap,
   });
 
   final List<MessageItem> messages;
@@ -31,6 +32,7 @@ class ChatMessageList extends StatefulWidget {
   final void Function(MessageItem message)? onSwipeReply;
   final String? highlightedMessageId;
   final void Function(String messageId)? onHighlightRequest;
+  final void Function(MessageItem message)? onCallLogTap;
 
   @override
   State<ChatMessageList> createState() => _ChatMessageListState();
@@ -39,7 +41,8 @@ class ChatMessageList extends StatefulWidget {
 class _ChatMessageListState extends State<ChatMessageList> {
   final Map<String, GlobalKey> _itemKeys = {};
 
-  bool _isMe(String fromUid) => widget.currentUserUid != null && widget.currentUserUid == fromUid;
+  bool _isMe(String fromUid) =>
+      widget.currentUserUid != null && widget.currentUserUid == fromUid;
 
   GlobalKey _keyForMessage(String id) {
     return _itemKeys.putIfAbsent(id, () => GlobalKey(debugLabel: 'msg-$id'));
@@ -62,15 +65,14 @@ class _ChatMessageListState extends State<ChatMessageList> {
   Widget build(BuildContext context) {
     return ListView.builder(
       controller: widget.scrollController,
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 12.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       itemCount: widget.messages.length,
       itemBuilder: (context, i) {
         final m = widget.messages[i];
         final isMe = _isMe(m.fromUid);
-        final bubbleText = m.status == 'deleted' ? 'This message was deleted' : m.text;
+        final bubbleText = m.status == 'deleted'
+            ? 'This message was deleted'
+            : m.text;
         final replyMsg = m.replyToMessageId != null
             ? widget.messages.firstWhere(
                 (x) => x.id == m.replyToMessageId,
@@ -86,15 +88,21 @@ class _ChatMessageListState extends State<ChatMessageList> {
             : null;
         final replySenderName = (replyMsg != null && replyMsg.id.isNotEmpty)
             ? (replyMsg.fromUid == widget.currentUserUid
-                ? (widget.currentUserName?.isNotEmpty == true ? widget.currentUserName! : 'You')
-                : (replyMsg.fromUid == widget.otherUid ? widget.title : 'Unknown'))
+                  ? (widget.currentUserName?.isNotEmpty == true
+                        ? widget.currentUserName!
+                        : 'You')
+                  : (replyMsg.fromUid == widget.otherUid
+                        ? widget.title
+                        : 'Unknown'))
             : null;
-        final replyPreviewText = (replyMsg != null && replyMsg.id.isNotEmpty) ? replyMsg.text : null;
+        final replyPreviewText = (replyMsg != null && replyMsg.id.isNotEmpty)
+            ? replyMsg.text
+            : null;
         final bubbleKey = _keyForMessage(m.id);
         final isHighlighted = widget.highlightedMessageId == m.id;
         return Dismissible(
           key: ValueKey('swipe-${m.id}'),
-        
+
           resizeDuration: Duration.zero,
           movementDuration: const Duration(milliseconds: 160),
           dismissThresholds: const {
@@ -102,7 +110,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
             DismissDirection.endToStart: 0.18,
           },
           confirmDismiss: (direction) async {
-            if (m.status == 'deleted' || widget.onSwipeReply == null) return false;
+            if (m.status == 'deleted' || widget.onSwipeReply == null) {
+              return false;
+            }
             widget.onSwipeReply!(m);
             return false; // keep the item in place
           },
@@ -114,7 +124,10 @@ class _ChatMessageListState extends State<ChatMessageList> {
                 children: [
                   Icon(Icons.reply, color: AppTheme.primary, size: 24.sp),
                   SizedBox(width: 6.w),
-                  Text('Reply', style: TextStyle(color: AppTheme.primary, fontSize: 13.sp)),
+                  Text(
+                    'Reply',
+                    style: TextStyle(color: AppTheme.primary, fontSize: 13.sp),
+                  ),
                 ],
               ),
             ),
@@ -126,7 +139,10 @@ class _ChatMessageListState extends State<ChatMessageList> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('Reply', style: TextStyle(color: AppTheme.primary, fontSize: 13.sp)),
+                  Text(
+                    'Reply',
+                    style: TextStyle(color: AppTheme.primary, fontSize: 13.sp),
+                  ),
                   SizedBox(width: 6.w),
                   Icon(Icons.reply, color: AppTheme.primary, size: 24.sp),
                 ],
@@ -144,7 +160,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
               decoration: BoxDecoration(
-                color: isHighlighted ? Colors.yellow.withValues(alpha: .15) : Colors.transparent,
+                color: isHighlighted
+                    ? Colors.yellow.withValues(alpha: .15)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: MessageBubble(
@@ -156,8 +174,16 @@ class _ChatMessageListState extends State<ChatMessageList> {
                 lastReadAtOther: widget.lastReadAtOther,
                 replySenderName: replySenderName,
                 replyPreviewText: replyPreviewText,
-                onReplyTap: (m.replyToMessageId != null && replyMsg != null && replyMsg.id.isNotEmpty)
+                onReplyTap:
+                    (m.replyToMessageId != null &&
+                        replyMsg != null &&
+                        replyMsg.id.isNotEmpty)
                     ? () => _scrollToReply(m.replyToMessageId!)
+                    : null,
+                type: m.type,
+                metadata: m.metadata,
+                onTap: (m.type == 'call_log' && widget.onCallLogTap != null)
+                    ? () => widget.onCallLogTap!(m)
                     : null,
               ),
             ),

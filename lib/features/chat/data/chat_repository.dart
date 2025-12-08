@@ -30,6 +30,8 @@ class MessageItem {
     this.reactions = const {},
     this.replyToMessageId,
     this.replyPreviewText,
+    this.type,
+    this.metadata,
   });
   final String id;
   final String fromUid;
@@ -41,6 +43,8 @@ class MessageItem {
   final Map<String, String> reactions; // uid -> emoji
   final String? replyToMessageId;
   final String? replyPreviewText;
+  final String? type;
+  final Map<String, dynamic>? metadata;
 }
 
 class ChatRepository {
@@ -130,6 +134,8 @@ class ChatRepository {
           reactions: reactions,
           replyToMessageId: (data['replyToMessageId']) as String?,
           replyPreviewText: (data['replyPreviewText']) as String?,
+          type: (data['type']) as String?,
+          metadata: (data['metadata'] as Map<String, dynamic>?),
         );
       }).toList().reversed.toList();
        return items;
@@ -140,18 +146,29 @@ class ChatRepository {
     return _db.collection('conversations').doc(conversationId).snapshots();
   }
 
-  Future<void> sendMessage({required String conversationId, required String fromUid, required String toUid, required String text, String? replyToMessageId, String? replyPreviewText}) async {
+  Future<void> sendMessage({
+    required String conversationId,
+    required String fromUid,
+    required String toUid,
+    required String text,
+    String? replyToMessageId,
+    String? replyPreviewText,
+    String? type,
+    Map<String, dynamic>? metadata,
+  }) async {
     final msgRef = _db.collection('conversations').doc(conversationId).collection('messages').doc();
     final batch = _db.batch()
-    ..set(msgRef, {
-      'fromUid': fromUid,
-      'toUid': toUid,
-      'text': text,
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': 'sent',
-      if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
-      if (replyPreviewText != null) 'replyPreviewText': replyPreviewText,
-    });
+      ..set(msgRef, {
+        'fromUid': fromUid,
+        'toUid': toUid,
+        'text': text,
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'sent',
+        if (replyToMessageId != null) 'replyToMessageId': replyToMessageId,
+        if (replyPreviewText != null) 'replyPreviewText': replyPreviewText,
+        if (type != null) 'type': type,
+        if (metadata != null) 'metadata': metadata,
+      });
     final convRef = _db.collection('conversations').doc(conversationId);
     batch.update(convRef, {
       'lastMessage': text,

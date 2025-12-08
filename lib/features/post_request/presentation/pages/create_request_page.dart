@@ -54,7 +54,10 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextButton(onPressed: () => Navigator.of(modalCtx).pop(), child: Text(tx.cancel)),
+                      TextButton(
+                        onPressed: () => Navigator.of(modalCtx).pop(),
+                        child: Text(tx.cancel),
+                      ),
                       TextButton(
                         onPressed: () => Navigator.of(modalCtx).pop(),
                         child: Text(tx.save),
@@ -85,7 +88,8 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
     );
   }
 
-  List<String> _cities(String? country) => country == null ? [] : (AppOptions.citiesByCountry[country] ?? []);
+  List<String> _cities(String? country) =>
+      country == null ? [] : (AppOptions.citiesByCountry[country] ?? []);
 
   void _showError(BuildContext context, String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -109,8 +113,18 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                 SizedBox(height: 8.h),
                 Row(
                   children: [
-                    IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).maybePop()),
-                    Expanded(child: Center(child: Text(tx.createRequestBlood, style: Theme.of(context).textTheme.titleLarge))),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          tx.createRequestBlood,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                    ),
                     SizedBox(width: 48.w),
                   ],
                 ),
@@ -124,18 +138,38 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Post Title
-                            Text(tx.nameLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.nameLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             TextField(
                               controller: _nameCtrl,
-                              onChanged: context.read<CreateRequestCubit>().onNameChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onNameChanged,
                               decoration: InputDecoration(
                                 hintText: tx.nameHint,
                                 filled: true,
                                 fillColor: const Color(0xFFF8F8F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -147,47 +181,79 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                               value: state.bloodGroup,
                               items: AppOptions.bloodGroups,
                               hint: tx.bloodGroupHint,
-                              onChanged: (v) => context.read<CreateRequestCubit>().setBloodGroup(v),
+                              onChanged: (v) => context
+                                  .read<CreateRequestCubit>()
+                                  .setBloodGroup(v),
                             ),
 
                             SizedBox(height: 12.h),
                             // Amount of Request Blood
-                            Text(tx.howManyBagsLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.howManyBagsLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             TextField(
                               controller: _bagsCtrl,
-                              onChanged: context.read<CreateRequestCubit>().onBagsChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onBagsChanged,
                               decoration: InputDecoration(
                                 hintText: tx.typeMessageHint,
                                 filled: true,
                                 fillColor: const Color(0xFFF8F8F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
                               ),
                             ),
 
                             SizedBox(height: 12.h),
                             // Date
-                            Text(tx.dobLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.dobLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             InkWell(
                               onTap: () => _showCupertinoDatePicker(context),
                               child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 14.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF8F8F8),
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(color: Colors.black12),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       state.date == null
                                           ? tx.selectDate
                                           : '${_two(state.date!.day)} ${_month(state.date!.month)} ${state.date!.year}',
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(color: Colors.black87),
                                     ),
                                     const Icon(Icons.calendar_today, size: 18),
                                   ],
@@ -197,18 +263,38 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
 
                             SizedBox(height: 12.h),
                             // Hospital Name
-                            Text(tx.hospitalLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.hospitalLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             TextField(
                               controller: _hospitalCtrl,
-                              onChanged: context.read<CreateRequestCubit>().onHospitalChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onHospitalChanged,
                               decoration: InputDecoration(
                                 hintText: tx.hospitalName,
                                 filled: true,
                                 fillColor: const Color(0xFFF8F8F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -219,41 +305,83 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                               label: tx.whyNeedBloodTitle,
                               hint: tx.aboutYourselfHint,
                               initialText: '',
-                              onChanged: context.read<CreateRequestCubit>().onReasonChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onReasonChanged,
                             ),
 
                             SizedBox(height: 12.h),
                             // Contact person Name
-                            Text(tx.contactPersonLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.contactPersonLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             TextField(
                               controller: _contactPersonCtrl,
-                              onChanged: context.read<CreateRequestCubit>().onContactPersonChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onContactPersonChanged,
                               decoration: InputDecoration(
                                 hintText: tx.nameHint,
                                 filled: true,
                                 fillColor: const Color(0xFFF8F8F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
                               ),
                             ),
 
                             SizedBox(height: 12.h),
                             // Mobile number
-                            Text(tx.mobileNumberLabel, style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              tx.mobileNumberLabel,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                             SizedBox(height: 8.h),
                             TextField(
                               controller: _mobileCtrl,
                               keyboardType: TextInputType.phone,
-                              onChanged: context.read<CreateRequestCubit>().onMobileChanged,
+                              onChanged: context
+                                  .read<CreateRequestCubit>()
+                                  .onMobileChanged,
                               decoration: InputDecoration(
                                 hintText: tx.mobileNumberLabel,
                                 filled: true,
                                 fillColor: const Color(0xFFF8F8F8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
-                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: const BorderSide(color: Colors.black12)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black12,
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -265,7 +393,9 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                               value: state.country,
                               items: AppOptions.countries,
                               hint: tx.countryHint,
-                              onChanged: (v) => context.read<CreateRequestCubit>().setCountry(v),
+                              onChanged: (v) => context
+                                  .read<CreateRequestCubit>()
+                                  .setCountry(v),
                             ),
 
                             SizedBox(height: 12.h),
@@ -276,22 +406,28 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                               value: state.city,
                               items: cities,
                               hint: tx.cityHint,
-                              onChanged: (v) => context.read<CreateRequestCubit>().setCity(v),
+                              onChanged: (v) =>
+                                  context.read<CreateRequestCubit>().setCity(v),
                             ),
 
                             SizedBox(height: 20.h),
                             BlocConsumer<CreatePostCubit, CreatePostState>(
                               listener: (context, postState) {
-                                if (postState.postId != null && !postState.loading) {
+                                if (postState.postId != null &&
+                                    !postState.loading) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Post created')),
+                                    const SnackBar(
+                                      content: Text('Post created'),
+                                    ),
                                   );
                                   _nameCtrl.clear();
                                   _bagsCtrl.clear();
                                   _hospitalCtrl.clear();
                                   _contactPersonCtrl.clear();
                                   _mobileCtrl.clear();
-                                  setState(() { _clearTick++; });
+                                  setState(() {
+                                    _clearTick++;
+                                  });
                                   context.read<CreateRequestCubit>().reset();
                                 }
                                 if (postState.error != null) {
@@ -304,29 +440,63 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
                                 return SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
-                                    onPressed: (!valid || loading) ? null : () {
-                                      final data = {
-                                        'name': state.name.trim(),
-                                        'bloodGroup': state.bloodGroup,
-                                        'bags': state.bags.trim(),
-                                        'date': state.date?.toIso8601String(),
-                                        'hospital': state.hospital.trim(),
-                                        'reason': state.reason.trim(),
-                                        'contactPerson': state.contactPerson.trim(),
-                                        'mobile': state.mobile.trim(),
-                                        'country': state.country,
-                                        'city': state.city,
-                                      };
-                                      context.read<CreatePostCubit>().submit(data);
-                                    },
+                                    onPressed: (!valid || loading)
+                                        ? null
+                                        : () {
+                                            final data = {
+                                              'name': state.name.trim(),
+                                              'bloodGroup': state.bloodGroup,
+                                              'bags': state.bags.trim(),
+                                              'date': state.date
+                                                  ?.toIso8601String(),
+                                              'hospital': state.hospital.trim(),
+                                              'reason': state.reason.trim(),
+                                              'contactPerson': state
+                                                  .contactPerson
+                                                  .trim(),
+                                              'mobile': state.mobile.trim(),
+                                              'country': state.country,
+                                              'city': state.city,
+                                            };
+                                            context
+                                                .read<CreatePostCubit>()
+                                                .submit(data);
+                                          },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: valid && !loading ? Colors.redAccent : Colors.redAccent.withOpacity(0.6),
-                                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                                      backgroundColor: valid && !loading
+                                          ? Colors.redAccent
+                                          : Colors.redAccent.withValues(
+                                              alpha: 0.6,
+                                            ),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 14.h,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                      ),
                                     ),
                                     child: loading
-                                      ? SizedBox(height: 20.w, width: 20.w, child: const CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
-                                      : Text('Create Post', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+                                        ? SizedBox(
+                                            height: 20.w,
+                                            width: 20.w,
+                                            child:
+                                                const CircularProgressIndicator(
+                                                  strokeWidth: 2.2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                        Color
+                                                      >(Colors.white),
+                                                ),
+                                          )
+                                        : Text(
+                                            'Create Post',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(color: Colors.white),
+                                          ),
                                   ),
                                 );
                               },
@@ -348,7 +518,20 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
 
   String _two(int n) => n.toString().padLeft(2, '0');
   String _month(int m) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return months[m-1];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[m - 1];
   }
 }

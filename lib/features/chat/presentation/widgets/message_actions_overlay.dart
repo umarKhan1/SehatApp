@@ -43,9 +43,7 @@ class MessageActionsOverlay extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  color: Colors.black.withOpacity(
-                    0.32 * fadeAnim.value,
-                  ),
+                  color: Colors.black.withValues(alpha: 0.32 * fadeAnim.value),
                 ),
               ),
             ),
@@ -65,7 +63,7 @@ class MessageActionsOverlay extends StatelessWidget {
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha:  0.85),
+                      color: Colors.black.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(24.r),
                     ),
                     child: Row(
@@ -97,9 +95,7 @@ class MessageActionsOverlay extends StatelessWidget {
                 Transform.scale(
                   scale: scaleAnim.value,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: bubbleMaxWidth,
-                    ),
+                    constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
                     child: Material(
                       color: Colors.transparent,
                       elevation: 12,
@@ -127,10 +123,7 @@ class MessageActionsOverlay extends StatelessWidget {
                       children: [
                         ListTile(
                           dense: true,
-                          leading: const Icon(
-                            Icons.reply,
-                            color: Colors.white,
-                          ),
+                          leading: const Icon(Icons.reply, color: Colors.white),
                           title: const Text(
                             'Reply',
                             style: TextStyle(color: Colors.white),

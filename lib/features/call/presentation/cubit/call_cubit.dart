@@ -1,10 +1,17 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:sehatapp/features/call/domain/entities/call_session.dart';
 import 'package:sehatapp/features/call/domain/repositories/call_repository.dart';
+import 'package:sehatapp/features/call/presentation/managers/call_audio_manager.dart';
+import 'package:sehatapp/features/call/presentation/managers/call_duration_manager.dart';
+import 'package:sehatapp/features/call/presentation/managers/call_notification_manager.dart';
+import 'package:sehatapp/features/chat/data/chat_repository.dart';
 
+/// CallState represents the current state of a call
 class CallState {
   const CallState({
     this.loading = false,
@@ -16,6 +23,7 @@ class CallState {
     this.isCameraOn = true,
     this.isSpeakerOn = true,
     this.phase = CallPhase.idle,
+    this.duration = Duration.zero,
   });
 
   final bool loading;
@@ -27,6 +35,7 @@ class CallState {
   final bool isCameraOn;
   final bool isSpeakerOn;
   final CallPhase phase;
+  final Duration duration;
 
   CallState copyWith({
     bool? loading,
@@ -38,6 +47,7 @@ class CallState {
     bool? isCameraOn,
     bool? isSpeakerOn,
     CallPhase? phase,
+    Duration? duration,
   }) {
     return CallState(
       loading: loading ?? this.loading,
@@ -49,99 +59,576 @@ class CallState {
       isCameraOn: isCameraOn ?? this.isCameraOn,
       isSpeakerOn: isSpeakerOn ?? this.isSpeakerOn,
       phase: phase ?? this.phase,
+      duration: duration ?? this.duration,
     );
   }
 }
 
+String callOutcomeTitle(CallOutcome outcome) {
+  if (outcome.outcome == CallOutcomeType.missed && outcome.isIncoming) {
+    return 'Missed call';
+  }
+  return outcome.type == CallType.video ? 'Video call' : 'Voice call';
+}
+
+String callOutcomeSubtitle(CallOutcome outcome) {
+  switch (outcome.outcome) {
+    case CallOutcomeType.rejected:
+      return 'Declined';
+    case CallOutcomeType.noAnswer:
+      return 'No answer';
+    case CallOutcomeType.missed:
+      return outcome.isIncoming ? 'Tap to call back' : 'No answer';
+    case CallOutcomeType.completed:
+      return _formatOutcomeDuration(outcome.duration);
+  }
+}
+
+String _formatOutcomeDuration(Duration duration) {
+  if (duration.inMinutes == 0 && duration.inSeconds < 60) {
+    return '${duration.inSeconds} secs';
+  }
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+  if (hours > 0) {
+    return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+  }
+  return '$minutes:$seconds';
+}
+
+/// Helper to pack call outcome into a backwards-compatible message payload
+Map<String, dynamic> callOutcomeMetadata(CallOutcome outcome) {
+  return {
+    'call': {
+      'id': outcome.callId,
+      'direction': outcome.isIncoming ? 'incoming' : 'outgoing',
+      'type': outcome.type.name,
+      'outcome': outcome.outcome.name,
+      'durationSeconds': outcome.duration.inSeconds,
+      'endedAt': outcome.endedAt.toIso8601String(),
+    },
+  };
+}
+
+/// Helper text for chat bubble bodies (safe for old clients)
+String callOutcomeText(CallOutcome outcome) {
+  return '${callOutcomeTitle(outcome)} • ${callOutcomeSubtitle(outcome)}';
+}
+
 enum CallPhase { idle, outgoing, incoming, connecting, live, ended }
 
+enum CallOutcomeType { completed, noAnswer, rejected, missed }
+
+class CallOutcome {
+  CallOutcome({
+    required this.callId,
+    required this.isIncoming,
+    required this.type,
+    required this.outcome,
+    required this.duration,
+    required this.endedAt,
+  });
+
+  final String callId;
+  final bool isIncoming;
+  final CallType type;
+  final CallOutcomeType outcome;
+  final Duration duration;
+  final DateTime endedAt;
+}
+
+/// CallCubit manages call state, WebRTC connections, and signaling
 class CallCubit extends Cubit<CallState> {
-  CallCubit(this.repo, {FirebaseAuth? auth})
-      : _auth = auth ?? FirebaseAuth.instance,
-        super(const CallState());
+  CallCubit(this.repo, {required this.chatRepo, FirebaseAuth? auth})
+    : _auth = auth ?? FirebaseAuth.instance,
+      super(const CallState()) {
+    _durationManager = CallDurationManager(
+      onTick: (elapsed) {
+        if (!isClosed) {
+          _emitWithSideEffects(state.copyWith(duration: elapsed));
+        }
+      },
+    );
+
+    // Listen to auth state changes
+    _authSub = _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        // User is logged in, start listening for calls
+        _startIncomingListener();
+      } else {
+        // User logged out, stop listening
+        _incomingSub?.cancel();
+        _incomingSub = null;
+      }
+    });
+
+    _initNotifications();
+  }
 
   final ICallRepository repo;
+  final ChatRepository chatRepo;
   final FirebaseAuth _auth;
+
+  final CallAudioManager _audioManager = CallAudioManager();
+  late final CallDurationManager _durationManager;
+  final CallNotificationManager _notificationManager =
+      CallNotificationManager();
+  StreamSubscription<String>? _notificationSub;
+
+  void _initNotifications() {
+    _notificationManager.init();
+    _notificationSub = _notificationManager.onAction.listen((action) {
+      if (isClosed) return;
+      if (action == 'accept_call') {
+        if (state.session != null) {
+          acceptIncoming(state.session!);
+        }
+      } else if (action == 'decline_call') {
+        if (state.session != null) {
+          rejectIncoming(state.session!);
+        }
+      } else if (action == 'tap') {
+        // App was opened from notification body, handled naturally by incoming screen check
+      }
+    });
+  }
 
   RTCPeerConnection? _pc;
   StreamSubscription<CallSession?>? _callSub;
   StreamSubscription<IceCandidateModel>? _iceSub;
   StreamSubscription<CallSession?>? _incomingSub;
+  StreamSubscription<User?>? _authSub;
+  Timer? _ringingTimer;
+  CallOutcomeType? _overrideOutcome;
+  bool _hasEmittedOutcome = false;
+  final _outcomeController = StreamController<CallOutcome>.broadcast();
+
+  Stream<CallOutcome> get outcomes => _outcomeController.stream;
+
+  void _emitWithSideEffects(
+    CallState newState, {
+    bool skipSideEffects = false,
+  }) {
+    final prevPhase = state.phase;
+    final prevStatus = state.session?.status;
+    super.emit(newState);
+    if (!skipSideEffects) {
+      _handleStateChange(
+        prevPhase: prevPhase,
+        newPhase: newState.phase,
+        prevStatus: prevStatus,
+        newStatus: newState.session?.status,
+      );
+    }
+  }
 
   Future<void> startOutgoing({
     required String calleeUid,
     required String calleeName,
     required CallType type,
   }) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      emit(state.copyWith(error: 'Not logged in'));
-      return;
-    }
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (!isClosed) {
+          _emitWithSideEffects(
+            state.copyWith(error: 'Not logged in', phase: CallPhase.ended),
+          );
+        }
+        return;
+      }
 
-    emit(state.copyWith(loading: true, phase: CallPhase.outgoing));
-    final callId = await repo.createCall(
-      callerUid: user.uid,
-      callerName: user.displayName ?? 'Me',
-      calleeUid: calleeUid,
-      calleeName: calleeName,
-      type: type,
-    );
-    await _initPeer(type: type, isCaller: true, callId: callId, otherUid: calleeUid);
+      _resetTrackingForNewCall();
+
+      final callerName = (user.displayName ?? '').trim();
+      final safeCallerName = callerName.isNotEmpty
+          ? callerName
+          : (user.phoneNumber ?? user.email ?? 'Caller');
+
+      try {
+        await repo.clearIncoming(user.uid);
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      if (!isClosed) {
+        _emitWithSideEffects(
+          state.copyWith(
+            loading: true,
+            phase: CallPhase.outgoing,
+            duration: Duration.zero,
+          ),
+        );
+      }
+
+      String callId;
+      try {
+        callId = await repo.createCall(
+          callerUid: user.uid,
+          callerName: safeCallerName,
+          calleeUid: calleeUid,
+          calleeName: calleeName,
+          type: type,
+        );
+      } catch (e) {
+        if (!isClosed) {
+          _emitWithSideEffects(
+            state.copyWith(
+              error: 'Failed to create call: $e',
+              phase: CallPhase.ended,
+              loading: false,
+            ),
+          );
+        }
+        return;
+      }
+
+      await _initPeer(
+        type: type,
+        isCaller: true,
+        callId: callId,
+        otherUid: calleeUid,
+      );
+    } catch (e, _) {
+      _emitWithSideEffects(
+        state.copyWith(
+          error: 'Failed to start call: $e',
+          phase: CallPhase.ended,
+          loading: false,
+        ),
+      );
+    }
   }
 
   Future<void> acceptIncoming(CallSession session) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    emit(state.copyWith(loading: true, session: session, phase: CallPhase.connecting));
-    await _initPeer(type: session.type, isCaller: false, callId: session.id, otherUid: session.callerUid, remoteOffer: session.offer);
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return;
+      }
+
+      _resetTrackingForNewCall();
+
+      if (!isClosed) {
+        _emitWithSideEffects(
+          state.copyWith(
+            loading: true,
+            session: session,
+            phase: CallPhase.connecting,
+            duration: Duration.zero,
+          ),
+        );
+      }
+
+      try {
+        await repo.updateIncomingStatus(session.calleeUid, CallStatus.accepted);
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      CallSession fresh = session;
+      try {
+        final fetched = await repo.getCall(session.id);
+        if (fetched != null) {
+          fresh = fetched;
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      await _initPeer(
+        type: fresh.type,
+        isCaller: false,
+        callId: fresh.id,
+        otherUid: fresh.callerUid,
+        remoteOffer: fresh.offer,
+      );
+    } catch (e, _) {
+      if (!isClosed) {
+        _emitWithSideEffects(
+          state.copyWith(
+            error: 'Failed to accept call: $e',
+            phase: CallPhase.ended,
+            loading: false,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> rejectIncoming(CallSession session) async {
-    await repo.updateStatus(session.id, CallStatus.rejected);
-    emit(state.copyWith(phase: CallPhase.ended, session: session, loading: false));
+    // Optimistically update UI
+    if (!isClosed) {
+      _emitWithSideEffects(
+        state.copyWith(
+          phase: CallPhase.ended,
+          session: session,
+          loading: false,
+        ),
+      );
+    }
+
+    try {
+      _overrideOutcome = CallOutcomeType.rejected;
+      await _notificationManager.cancel(
+        session.id,
+      ); // Cancel notification if user rejected
+
+      await repo.updateStatus(session.id, CallStatus.rejected);
+      await repo.clearIncoming(session.calleeUid);
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      // Logic already handled by optimistic update
+    }
   }
 
   Future<void> hangup({String? reason}) async {
-    await _pc?.close();
-    _pc = null;
-    final id = state.session?.id;
-    if (id != null) {
-      await repo.endCall(id, reason: reason);
+    try {
+      _durationManager.stop();
+      _resolveOutcomeOnEnd(status: state.session?.status);
+      _stopRingingTimer();
+
+      try {
+        await _pc?.close();
+        _pc = null;
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      final id = state.session?.id;
+      if (id != null) {
+        try {
+          await repo.endCall(id, reason: reason);
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      }
+
+      final me = _auth.currentUser?.uid;
+      final session = state.session;
+
+      // If I am the caller, clear the callee's incoming request so they stop ringing
+      if (session != null && me != null && session.callerUid == me) {
+        try {
+          await repo.clearIncoming(session.calleeUid);
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      }
+
+      // Always clear my own incoming request (e.g. if I am rejecting a call)
+      if (me != null) {
+        try {
+          await repo.clearIncoming(me);
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      }
+
+      await _iceSub?.cancel();
+      await _callSub?.cancel();
+
+      try {
+        await state.localStream?.dispose();
+        await state.remoteStream?.dispose();
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      if (!isClosed) {
+        _emitWithSideEffects(const CallState(phase: CallPhase.ended));
+      }
+
+      if (!isClosed) {
+        _emitWithSideEffects(const CallState(phase: CallPhase.ended));
+      }
+
+      await _notificationManager.cancelAll();
+    } catch (e) {
+      if (!isClosed) {
+        _emitWithSideEffects(const CallState(phase: CallPhase.ended));
+      }
     }
-    await _iceSub?.cancel();
-    await _callSub?.cancel();
-    emit(const CallState(phase: CallPhase.ended));
   }
 
-  /// Listen for incoming ringing calls for the current user and emit incoming state.
-  Future<void> startIncomingListener() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    await _incomingSub?.cancel();
-    _incomingSub = repo.watchIncomingRinging(user.uid).listen((incoming) {
-      if (incoming != null) {
-        emit(state.copyWith(session: incoming, phase: CallPhase.incoming));
+  Future<void> _startIncomingListener() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (kDebugMode) {
+          print(
+            '[CallCubit] Cannot start incoming listener - no user logged in',
+          );
+        }
+        return;
       }
-    });
+
+      if (kDebugMode) {
+        print(
+          '[CallCubit] Starting incoming call listener for UID: ${user.uid}',
+        );
+        print(
+          '[CallCubit] User email: ${user.email}, displayName: ${user.displayName}',
+        );
+      }
+
+      await _incomingSub?.cancel();
+
+      _incomingSub = repo.watchIncomingRinging(user.uid).listen((
+        incoming,
+      ) async {
+        if (isClosed) return;
+
+        // Check if user is still logged in
+        final currentUser = _auth.currentUser;
+        if (currentUser == null) {
+          if (kDebugMode) {
+            print('[CallCubit] Ignoring incoming call - user not logged in');
+          }
+          return;
+        }
+
+        if (incoming != null) {
+          if (kDebugMode) {
+            print(
+              '[CallCubit] Incoming call detected: ${incoming.callerName} (${incoming.id})',
+            );
+            print('[CallCubit] Current phase: ${state.phase}');
+          }
+
+          final isAvailablePhase =
+              state.phase == CallPhase.idle ||
+              state.phase == CallPhase.incoming ||
+              state.phase == CallPhase.ended;
+
+          // Only accept incoming calls if we are in an available phase (not busy)
+          if (isAvailablePhase) {
+            if (kDebugMode) {
+              print(
+                '[CallCubit] Accepting incoming call, transitioning to CallPhase.incoming',
+              );
+            }
+            _resetTrackingForNewCall();
+            if (!isClosed) {
+              _emitWithSideEffects(
+                state.copyWith(session: incoming, phase: CallPhase.incoming),
+              );
+              // Show Local Notification
+              await _notificationManager.showIncomingNotification(incoming);
+            }
+            _startRingingTimeout(incoming, isIncoming: true);
+          } else {
+            if (kDebugMode) {
+              print(
+                '[CallCubit] Ignoring incoming call - already in ${state.phase}',
+              );
+            }
+          }
+        } else {
+          if (state.phase == CallPhase.incoming) {
+            if (kDebugMode) {
+              print('[CallCubit] Incoming call cleared, ending incoming phase');
+            }
+            _stopRingingTimer();
+            // Cancel notification if stopped ringing
+            final sessionId = state.session?.id;
+            if (sessionId != null) {
+              await _notificationManager.cancel(sessionId);
+            } else {
+              await _notificationManager.cancelAll();
+            }
+
+            if (!isClosed) {
+              _emitWithSideEffects(state.copyWith(phase: CallPhase.ended));
+            }
+          }
+        }
+      }, onError: (error) {});
+    } catch (e) {
+      // ignore
+      if (kDebugMode) {
+        print(e);
+      }
+    }
   }
+
+  Future<void> startIncomingListener() => _startIncomingListener();
 
   Future<void> toggleMute() async {
-    final next = !state.isMuted;
-    state.localStream?.getAudioTracks().forEach((t) => t.enabled = !next);
-    emit(state.copyWith(isMuted: next));
+    try {
+      final next = !state.isMuted;
+      state.localStream?.getAudioTracks().forEach((t) => t.enabled = !next);
+      if (!isClosed) {
+        _emitWithSideEffects(state.copyWith(isMuted: next));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
   }
 
   Future<void> toggleCamera() async {
-    final next = !state.isCameraOn;
-    state.localStream?.getVideoTracks().forEach((t) => t.enabled = next);
-    emit(state.copyWith(isCameraOn: next));
+    try {
+      final next = !state.isCameraOn;
+      state.localStream?.getVideoTracks().forEach((t) => t.enabled = next);
+      if (!isClosed) {
+        _emitWithSideEffects(state.copyWith(isCameraOn: next));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
+  }
+
+  Future<void> flipCamera() async {
+    try {
+      final tracks = state.localStream?.getVideoTracks();
+      final track = (tracks != null && tracks.isNotEmpty) ? tracks.first : null;
+      if (track != null) {
+        await Helper.switchCamera(track);
+        _emitWithSideEffects(state.copyWith(localStream: state.localStream));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[CallCubit] Error flipping camera: $e');
+      }
+    }
   }
 
   Future<void> toggleSpeaker() async {
-    final next = !state.isSpeakerOn;
-    await Helper.setSpeakerphoneOn(next);
-    emit(state.copyWith(isSpeakerOn: next));
+    try {
+      final next = !state.isSpeakerOn;
+      await Helper.setSpeakerphoneOn(next);
+      if (!isClosed) {
+        _emitWithSideEffects(state.copyWith(isSpeakerOn: next));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
   }
 
   Future<void> _initPeer({
@@ -152,89 +639,689 @@ class CallCubit extends Cubit<CallState> {
     Map<String, dynamic>? remoteOffer,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) return;
-    final config = {
-      'iceServers': [
-        // STUN-only for practice; add TURN here for production reliability.
-        {'urls': 'stun:stun.l.google.com:19302'},
-      ]
-    };
-    _pc = await createPeerConnection(config);
-
-    final mediaConstraints = <String, dynamic>{
-      'audio': true,
-      'video': type == CallType.video ? {'facingMode': 'user'} : false,
-    };
-    final local = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    for (final track in local.getTracks()) {
-      await _pc!.addTrack(track, local);
+    if (user == null) {
+      _emitWithSideEffects(
+        state.copyWith(error: 'Not logged in', phase: CallPhase.ended),
+      );
+      return;
     }
 
-    emit(state.copyWith(localStream: local, session: state.session));
+    try {
+      final config = {
+        'iceServers': [
+          {'urls': 'stun:stun.l.google.com:19302'},
+        ],
+      };
 
-    _pc!.onTrack = (event) {
-      if (event.streams.isNotEmpty) {
-        final stream = event.streams.first;
-        emit(state.copyWith(remoteStream: stream, phase: CallPhase.live));
+      try {
+        _pc = await createPeerConnection(config);
+      } catch (e) {
+        _emitWithSideEffects(
+          state.copyWith(
+            error: 'Failed to create connection: $e',
+            phase: CallPhase.ended,
+            loading: false,
+          ),
+        );
+        return;
       }
-    };
 
-    _pc!.onIceCandidate = (candidate) {
-      if (candidate.candidate != null) {
-        repo.addIceCandidate(
-          callId: callId,
-          candidate: IceCandidateModel(
-            fromUid: user.uid,
-            candidate: candidate.candidate!,
-            sdpMid: candidate.sdpMid,
-            sdpMLineIndex: candidate.sdpMLineIndex,
+      try {
+        await Helper.setSpeakerphoneOn(state.isSpeakerOn);
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      final mediaConstraints = <String, dynamic>{
+        'audio': true,
+        'video': type == CallType.video
+            ? {
+                'facingMode': 'user',
+                'width': {'ideal': 1280},
+                'height': {'ideal': 720},
+              }
+            : false,
+      };
+
+      MediaStream? local;
+      try {
+        local = await navigator.mediaDevices
+            .getUserMedia(mediaConstraints)
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw Exception('Media request timed out');
+              },
+            );
+
+        final audioTracks = local.getAudioTracks();
+        if (audioTracks.isNotEmpty) {
+          for (final track in audioTracks) {
+            track.enabled = true;
+          }
+        }
+
+        if (type == CallType.video) {
+          final videoTracks = local.getVideoTracks();
+          if (videoTracks.isNotEmpty) {
+            for (final track in videoTracks) {
+              track.enabled = true;
+            }
+          }
+        }
+
+        if (!isClosed) {
+          _emitWithSideEffects(
+            state.copyWith(
+              localStream: local,
+              session: state.session,
+              phase: isCaller ? CallPhase.outgoing : CallPhase.connecting,
+              loading: false,
+            ),
+          );
+        }
+      } catch (e) {
+        try {
+          await _pc?.close();
+          _pc = null;
+        } catch (cleanupError) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+        if (kDebugMode) {
+          print(e);
+        }
+
+        if (!isClosed) {
+          final errorMessage =
+              e.toString().contains('permission') ||
+                  e.toString().contains('Permission')
+              ? 'Microphone permission is required for calls'
+              : 'Failed to access microphone: $e';
+
+          _emitWithSideEffects(
+            state.copyWith(
+              error: errorMessage,
+              phase: CallPhase.ended,
+              loading: false,
+            ),
+          );
+        }
+        return;
+      }
+
+      try {
+        for (final track in local.getTracks()) {
+          await _pc!.addTrack(track, local);
+        }
+      } catch (e) {
+        await local.dispose();
+        await _pc?.close();
+        _pc = null;
+        _emitWithSideEffects(
+          state.copyWith(
+            error: 'Failed to add tracks: $e',
+            phase: CallPhase.ended,
+            loading: false,
+          ),
+        );
+        return;
+      }
+
+      _pc!.onIceConnectionState = (iceState) {
+        if (iceState == RTCIceConnectionState.RTCIceConnectionStateConnected ||
+            iceState == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
+          if (!isClosed) {
+            if (state.session?.status != CallStatus.live) {
+              repo.updateStatus(callId, CallStatus.live);
+            }
+            final session = state.session;
+            final hasRemote = state.remoteStream != null;
+            final phaseForUi =
+                session != null &&
+                    (session.status == CallStatus.live ||
+                        session.status == CallStatus.accepted) &&
+                    hasRemote
+                ? CallPhase.live
+                : CallPhase.connecting;
+            _emitWithSideEffects(state.copyWith(phase: phaseForUi));
+          }
+        } else if (iceState ==
+                RTCIceConnectionState.RTCIceConnectionStateFailed ||
+            iceState ==
+                RTCIceConnectionState.RTCIceConnectionStateDisconnected) {
+          if (!isClosed && state.phase != CallPhase.ended) {
+            _emitWithSideEffects(
+              state.copyWith(
+                error: 'Connection failed: $iceState',
+                phase: CallPhase.ended,
+              ),
+            );
+          }
+        }
+      };
+
+      _pc!.onConnectionState = (connectionState) {
+        if (connectionState ==
+            RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+          if (!isClosed && state.remoteStream != null) {
+            if (state.session?.status != CallStatus.live) {
+              repo.updateStatus(callId, CallStatus.live);
+            }
+            final session = state.session;
+            final phaseForUi =
+                session != null &&
+                    (session.status == CallStatus.live ||
+                        session.status == CallStatus.accepted)
+                ? CallPhase.live
+                : CallPhase.connecting;
+            _emitWithSideEffects(state.copyWith(phase: phaseForUi));
+          }
+        }
+      };
+
+      _pc!.onTrack = (event) {
+        try {
+          if (event.streams.isNotEmpty) {
+            final stream = event.streams.first;
+            final tracks = stream.getTracks();
+
+            for (final track in tracks) {
+              if (track.kind == 'audio') {
+                track.enabled = true;
+              }
+            }
+
+            bool hasAudio = tracks.any((t) => t.kind == 'audio' && t.enabled);
+
+            if (hasAudio && state.isSpeakerOn) {
+              Helper.setSpeakerphoneOn(true).catchError((e) {});
+            }
+
+            if (!isClosed) {
+              if (state.session?.status != CallStatus.live) {
+                repo.updateStatus(callId, CallStatus.live);
+              }
+              final session = state.session;
+              final phaseForUi =
+                  session != null &&
+                      (session.status == CallStatus.live ||
+                          session.status == CallStatus.accepted)
+                  ? CallPhase.live
+                  : CallPhase.connecting;
+              _emitWithSideEffects(
+                state.copyWith(remoteStream: stream, phase: phaseForUi),
+              );
+            }
+          }
+        } catch (e, _) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      };
+
+      _pc!.onIceCandidate = (candidate) {
+        try {
+          if (candidate.candidate != null && candidate.candidate!.isNotEmpty) {
+            repo.addIceCandidate(
+              callId: callId,
+              candidate: IceCandidateModel(
+                fromUid: user.uid,
+                candidate: candidate.candidate!,
+                sdpMid: candidate.sdpMid,
+                sdpMLineIndex: candidate.sdpMLineIndex,
+              ),
+            );
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      };
+
+      _iceSub?.cancel();
+      _iceSub = repo.watchIceCandidates(callId, excludingUid: user.uid).listen((
+        c,
+      ) async {
+        try {
+          await _pc?.addCandidate(
+            RTCIceCandidate(c.candidate, c.sdpMid, c.sdpMLineIndex),
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      }, onError: (error) {});
+
+      if (isCaller) {
+        try {
+          final offer = await _pc!.createOffer();
+          await _pc!.setLocalDescription(offer);
+          await repo.setOffer(callId: callId, offer: offer.toMap());
+          _listenCallUpdates(callId);
+        } catch (e) {
+          await local.dispose();
+          await _pc?.close();
+          _pc = null;
+          _emitWithSideEffects(
+            state.copyWith(
+              error: 'Failed to create offer: $e',
+              phase: CallPhase.ended,
+              loading: false,
+            ),
+          );
+          return;
+        }
+      } else {
+        if (remoteOffer != null && remoteOffer['sdp'] != null) {
+          try {
+            await _pc!.setRemoteDescription(
+              RTCSessionDescription(remoteOffer['sdp'], remoteOffer['type']),
+            );
+
+            final answer = await _pc!.createAnswer();
+
+            await _pc!.setLocalDescription(answer);
+
+            final answerMap = answer.toMap();
+            await repo.setAnswer(callId: callId, answer: answerMap);
+
+            _listenCallUpdates(callId);
+          } catch (e) {
+            await local.dispose();
+            await _pc?.close();
+            _pc = null;
+            if (!isClosed) {
+              _emitWithSideEffects(
+                state.copyWith(
+                  error: 'Failed to create answer: $e',
+                  phase: CallPhase.ended,
+                  loading: false,
+                ),
+              );
+            }
+            return;
+          }
+        } else {
+          _listenCallUpdates(callId);
+        }
+      }
+
+      _startConnectionCheck(callId);
+    } catch (e) {
+      if (!isClosed) {
+        _emitWithSideEffects(
+          state.copyWith(
+            error: 'Failed to initialize call: $e',
+            phase: CallPhase.ended,
+            loading: false,
           ),
         );
       }
-    };
-
-    _iceSub?.cancel();
-    _iceSub = repo.watchIceCandidates(callId, excludingUid: user.uid).listen((c) async {
-      await _pc?.addCandidate(RTCIceCandidate(c.candidate, c.sdpMid, c.sdpMLineIndex));
-    });
-
-    if (isCaller) {
-      final offer = await _pc!.createOffer();
-      await _pc!.setLocalDescription(offer);
-      await repo.setOffer(callId: callId, offer: offer.toMap());
-      _listenCallUpdates(callId);
-    } else {
-      if (remoteOffer != null) {
-        await _pc!.setRemoteDescription(RTCSessionDescription(remoteOffer['sdp'], remoteOffer['type']));
-        final answer = await _pc!.createAnswer();
-        await _pc!.setLocalDescription(answer);
-        await repo.setAnswer(callId: callId, answer: answer.toMap());
-      }
-      _listenCallUpdates(callId);
     }
-    emit(state.copyWith(phase: isCaller ? CallPhase.outgoing : CallPhase.connecting));
+  }
+
+  void _startConnectionCheck(String callId) {
+    int checkCount = 0;
+    const maxChecks = 30;
+
+    Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (isClosed || _pc == null) {
+        timer.cancel();
+        return;
+      }
+
+      checkCount++;
+      if (checkCount > maxChecks) {
+        timer.cancel();
+        return;
+      }
+
+      try {
+        if (state.remoteStream != null && state.phase != CallPhase.live) {
+          if (!isClosed) {
+            final session = state.session;
+            final phaseForUi =
+                session != null && session.status == CallStatus.live
+                ? CallPhase.live
+                : CallPhase.connecting;
+            _emitWithSideEffects(state.copyWith(phase: phaseForUi));
+          }
+          if (state.session?.status == CallStatus.live) {
+            timer.cancel();
+          }
+          return;
+        }
+
+        try {
+          final receivers = await _pc!.getReceivers();
+          bool hasRemoteTrack = receivers.any(
+            (r) => r.track != null && r.track!.kind != null,
+          );
+
+          if (hasRemoteTrack && state.remoteStream == null) {
+            for (final receiver in receivers) {
+              if (receiver.track != null) {
+                final track = receiver.track!;
+
+                if (track.kind == 'audio') {
+                  track.enabled = true;
+                }
+
+                final stream = await createLocalMediaStream('remote-stream');
+                await stream.addTrack(track);
+
+                for (final audioTrack in stream.getAudioTracks()) {
+                  audioTrack.enabled = true;
+                }
+
+                if (!isClosed) {
+                  final session = state.session;
+                  final phaseForUi =
+                      session != null && session.status == CallStatus.live
+                      ? CallPhase.live
+                      : CallPhase.connecting;
+                  _emitWithSideEffects(
+                    state.copyWith(remoteStream: stream, phase: phaseForUi),
+                  );
+
+                  if (track.kind == 'audio') {
+                    Helper.setSpeakerphoneOn(true).catchError((e) {});
+                  }
+
+                  if (session != null && session.status == CallStatus.live) {
+                    timer.cancel();
+                  }
+                  return;
+                }
+              }
+            }
+          } else if (hasRemoteTrack && state.phase != CallPhase.live) {
+            if (!isClosed) {
+              final session = state.session;
+              final phaseForUi =
+                  session != null && session.status == CallStatus.live
+                  ? CallPhase.live
+                  : CallPhase.connecting;
+              _emitWithSideEffects(state.copyWith(phase: phaseForUi));
+            }
+            if (state.session?.status == CallStatus.live) {
+              timer.cancel();
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print(e);
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+    });
   }
 
   void _listenCallUpdates(String callId) {
     _callSub?.cancel();
     _callSub = repo.watchCall(callId).listen((session) async {
-      if (session == null) return;
-      emit(state.copyWith(session: session, phase: _mapPhase(session.status)));
+      if (session == null || isClosed) return;
 
-      if (session.answer != null && _pc?.remo == null) {
-        await _pc?.setRemoteDescription(RTCSessionDescription(session.answer!['sdp'], session.answer!['type']));
+      if (!isClosed) {
+        final phase = _mapPhaseForSession(session);
+        _emitWithSideEffects(state.copyWith(session: session, phase: phase));
       }
 
-      if (session.status == CallStatus.ended || session.status == CallStatus.rejected || session.status == CallStatus.missed) {
+      try {
+        if (session.answer != null && session.answer!['sdp'] != null) {
+          final remote = await _pc?.getRemoteDescription();
+          if (remote == null) {
+            await _pc?.setRemoteDescription(
+              RTCSessionDescription(
+                session.answer!['sdp'],
+                session.answer!['type'],
+              ),
+            );
+          }
+        }
+
+        if (session.offer != null &&
+            session.offer!['sdp'] != null &&
+            _pc != null) {
+          final local = await _pc?.getLocalDescription();
+          if (local == null) {
+            try {
+              await _pc?.setRemoteDescription(
+                RTCSessionDescription(
+                  session.offer!['sdp'],
+                  session.offer!['type'],
+                ),
+              );
+
+              final answer = await _pc?.createAnswer();
+              if (answer != null) {
+                await _pc?.setLocalDescription(answer);
+                await repo.setAnswer(
+                  callId: session.id,
+                  answer: answer.toMap(),
+                );
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print(e);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+
+      if (session.status == CallStatus.ended ||
+          session.status == CallStatus.rejected ||
+          session.status == CallStatus.missed) {
         await hangup(reason: session.endedReason);
+      }
+    }, onError: (error) {});
+  }
+
+  void _handleStateChange({
+    required CallPhase prevPhase,
+    required CallPhase newPhase,
+    required CallStatus? prevStatus,
+    required CallStatus? newStatus,
+  }) {
+    final session = state.session;
+    final isIncoming = _isCurrentUserCallee(session);
+    final wasLive =
+        state.phase == CallPhase.live ||
+        (state.duration > Duration.zero) ||
+        (_durationManager.liveStartAt != null);
+
+    if (newStatus != prevStatus) {
+      if (newStatus == CallStatus.ringing && session != null) {
+        _startRingingTimeout(session, isIncoming: isIncoming);
+      }
+
+      if (newStatus == CallStatus.accepted || newStatus == CallStatus.live) {
+        _stopRingingTimer();
+      }
+
+      if (_isTerminalStatus(newStatus)) {
+        _stopRingingTimer();
+        _audioManager.stopRings();
+        _durationManager.stop(resetStart: true);
+        _resolveOutcomeOnEnd(status: newStatus);
+      }
+    }
+
+    // Audio Logic
+    if (newPhase == CallPhase.outgoing && prevPhase != CallPhase.outgoing) {
+      _audioManager.playOutgoingRing();
+    } else if (newPhase == CallPhase.incoming &&
+        prevPhase != CallPhase.incoming) {
+      // Play system ringtone for incoming calls
+      _audioManager.playIncomingRing();
+    } else if (newPhase == CallPhase.live ||
+        newPhase == CallPhase.ended ||
+        newPhase == CallPhase.connecting) {
+      if (prevPhase == CallPhase.outgoing || prevPhase == CallPhase.incoming) {
+        _audioManager.stopRings();
+      }
+    }
+
+    final wentLive =
+        newStatus == CallStatus.live && prevStatus != CallStatus.live;
+    if (wentLive) {
+      _stopRingingTimer();
+      _durationManager.start(null);
+    }
+
+    if (newPhase == CallPhase.ended && prevPhase != CallPhase.ended) {
+      _stopRingingTimer();
+      if (wasLive) {
+        _durationManager.stop();
+      } else {
+        _emitWithSideEffects(
+          state.copyWith(duration: Duration.zero),
+          skipSideEffects: true,
+        );
+      }
+      _durationManager.stop(resetStart: true);
+      _resolveOutcomeOnEnd(status: newStatus);
+    }
+  }
+
+  void _startRingingTimeout(CallSession session, {required bool isIncoming}) {
+    _ringingTimer?.cancel();
+    _ringingTimer = Timer(const Duration(seconds: 30), () async {
+      if (isClosed) return;
+      if (state.session?.id == session.id &&
+          state.session?.status == CallStatus.ringing) {
+        if (state.phase == CallPhase.outgoing ||
+            state.phase == CallPhase.incoming) {
+          if (isIncoming) {
+            await repo.updateStatus(session.id, CallStatus.missed);
+            await repo.clearIncoming(session.calleeUid);
+            _overrideOutcome = CallOutcomeType.missed;
+          } else {
+            await repo.updateStatus(session.id, CallStatus.missed);
+            await repo.clearIncoming(session.calleeUid);
+            _overrideOutcome = CallOutcomeType.noAnswer;
+          }
+          await hangup(reason: 'timeout');
+        }
       }
     });
   }
 
-  CallPhase _mapPhase(CallStatus status) {
-    switch (status) {
+  void _stopRingingTimer() {
+    _ringingTimer?.cancel();
+    _ringingTimer = null;
+  }
+
+  bool _isTerminalStatus(CallStatus? status) {
+    return status == CallStatus.ended ||
+        status == CallStatus.rejected ||
+        status == CallStatus.missed ||
+        status == CallStatus.failed;
+  }
+
+  bool _isCurrentUserCallee(CallSession? session) {
+    if (session == null) return false;
+    final user = _auth.currentUser;
+    return user != null && session.calleeUid == user.uid;
+  }
+
+  void _resetTrackingForNewCall() {
+    _stopRingingTimer();
+    _durationManager.stop(resetStart: true);
+    _overrideOutcome = null;
+    _hasEmittedOutcome = false;
+    if (!isClosed) {
+      _emitWithSideEffects(
+        state.copyWith(duration: Duration.zero),
+        skipSideEffects: true,
+      );
+    }
+  }
+
+  void _resolveOutcomeOnEnd({CallStatus? status}) {
+    if (_hasEmittedOutcome) return;
+    final session = state.session;
+    if (session == null) return;
+
+    final bool isIncoming = _isCurrentUserCallee(session);
+    final bool wasLive =
+        (_durationManager.liveStartAt != null) ||
+        state.duration > Duration.zero;
+
+    CallOutcomeType type = CallOutcomeType.noAnswer;
+    if (wasLive) {
+      type = CallOutcomeType.completed;
+    } else if (_overrideOutcome != null) {
+      type = _overrideOutcome!;
+    } else if (status == CallStatus.rejected) {
+      type = CallOutcomeType.rejected;
+    } else if (status == CallStatus.missed) {
+      type = CallOutcomeType.missed;
+    } else if (isIncoming) {
+      type = CallOutcomeType.missed;
+    }
+
+    _recordOutcome(type);
+  }
+
+  void _recordOutcome(CallOutcomeType type, {Duration? durationOverride}) {
+    if (_hasEmittedOutcome || _outcomeController.isClosed) return;
+    final session = state.session;
+    if (session == null) return;
+
+    _hasEmittedOutcome = true;
+    final isIncoming = _isCurrentUserCallee(session);
+    final duration = durationOverride ?? state.duration;
+    final outcome = CallOutcome(
+      callId: session.id,
+      isIncoming: isIncoming,
+      type: session.type,
+      outcome: type,
+      duration: duration,
+      endedAt: DateTime.now(),
+    );
+
+    try {
+      _outcomeController.add(outcome);
+    } catch (e) {
+      // already closed
+    }
+
+    chatRepo.sendMessage(
+      conversationId: chatRepo.conversationId(
+        session.callerUid,
+        session.calleeUid,
+      ),
+      fromUid: session.callerUid,
+      toUid: session.calleeUid,
+      text: callOutcomeText(outcome),
+      type: 'call_log',
+      metadata: callOutcomeMetadata(outcome),
+    );
+  }
+
+  CallPhase _mapPhaseForSession(CallSession session) {
+    switch (session.status) {
       case CallStatus.ringing:
-        return CallPhase.incoming;
+        return _isCurrentUserCallee(session)
+            ? CallPhase.incoming
+            : CallPhase.outgoing;
       case CallStatus.accepted:
       case CallStatus.connecting:
         return CallPhase.connecting;
@@ -250,12 +1337,26 @@ class CallCubit extends Cubit<CallState> {
 
   @override
   Future<void> close() async {
+    _stopRingingTimer();
+    _durationManager.stop(resetStart: true);
     await _callSub?.cancel();
     await _iceSub?.cancel();
     await _incomingSub?.cancel();
+    await _authSub?.cancel();
     await _pc?.close();
-    await state.localStream?.dispose();
-    await state.remoteStream?.dispose();
+    try {
+      await state.localStream?.dispose();
+      await state.remoteStream?.dispose();
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
+    _audioManager
+      ..stopRings()
+      ..dispose();
+    await _notificationSub?.cancel();
+    await _outcomeController.close();
     return super.close();
   }
 }
