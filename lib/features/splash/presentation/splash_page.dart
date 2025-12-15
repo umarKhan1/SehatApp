@@ -17,7 +17,6 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // Ensure listeners are mounted before first emission
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<SplashCubit>().start();
@@ -29,7 +28,7 @@ class _SplashPageState extends State<SplashPage> {
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
         if (state is SplashFinished) {
-          context.goNamed('onboarding');
+          context.goNamed(state.nextRoute);
         }
       },
       child: Scaffold(

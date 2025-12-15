@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sehatapp/features/auth/data/auth_repository.dart';
 import 'package:sehatapp/features/auth/data/user_repository.dart';
 import 'package:sehatapp/features/auth/models/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginValidationState {
   const LoginValidationState({
@@ -24,7 +25,16 @@ class LoginValidationState {
   final bool success;
   final String? nextRouteName;
 
-  LoginValidationState copyWith({String? email, String? password, bool? isValid, bool? submitting, bool? passwordVisible, String? error, bool? success, String? nextRouteName}) {
+  LoginValidationState copyWith({
+    String? email,
+    String? password,
+    bool? isValid,
+    bool? submitting,
+    bool? passwordVisible,
+    String? error,
+    bool? success,
+    String? nextRouteName,
+  }) {
     return LoginValidationState(
       email: email ?? this.email,
       password: password ?? this.password,
@@ -39,17 +49,30 @@ class LoginValidationState {
 }
 
 class LoginValidationCubit extends Cubit<LoginValidationState> {
-  LoginValidationCubit({required this.auth, required this.users}) : super(const LoginValidationState());
+  LoginValidationCubit({required this.auth, required this.users})
+    : super(const LoginValidationState());
 
   final AuthRepository auth;
   final IUserRepository users;
 
   void onEmailChanged(String value) {
-    emit(state.copyWith(email: value, isValid: _validate(value, state.password), success: false));
+    emit(
+      state.copyWith(
+        email: value,
+        isValid: _validate(value, state.password),
+        success: false,
+      ),
+    );
   }
 
   void onPasswordChanged(String value) {
-    emit(state.copyWith(password: value, isValid: _validate(state.email, value), success: false));
+    emit(
+      state.copyWith(
+        password: value,
+        isValid: _validate(state.email, value),
+        success: false,
+      ),
+    );
   }
 
   void togglePasswordVisibility() {
@@ -67,12 +90,18 @@ class LoginValidationCubit extends Cubit<LoginValidationState> {
     if (!state.isValid) return;
     emit(state.copyWith(submitting: true, success: false));
     try {
-      final cred = await auth.signInWithEmail(email: state.email.trim(), password: state.password.trim());
+      final cred = await auth.signInWithEmail(
+        email: state.email.trim(),
+        password: state.password.trim(),
+      );
       final uid = cred.user!.uid;
       final UserModel? user = await users.getUser(uid);
       final bool profileCompleted = user?.profileCompleted ?? false;
-      // Fallback to step based on profileCompleted if needed
-      final int step = profileCompleted ? 3 : 1;
+      // Use profileStep from user model, default to 1
+      final int step = user?.profileStep ?? (profileCompleted ? 3 : 1);
+
+      // Debug logging
+
       String route;
       if (profileCompleted || step >= 3) {
         route = 'shell';
@@ -81,9 +110,18 @@ class LoginValidationCubit extends Cubit<LoginValidationState> {
       } else {
         route = 'profileSetupStep1';
       }
-      emit(state.copyWith(submitting: false, success: true, nextRouteName: route));
+
+      // Save session preference
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('stay_logged_in', true);
+
+      emit(
+        state.copyWith(submitting: false, success: true, nextRouteName: route),
+      );
     } catch (e) {
-      emit(state.copyWith(submitting: false, error: e.toString(), success: false));
+      emit(
+        state.copyWith(submitting: false, error: e.toString(), success: false),
+      );
     }
   }
 }

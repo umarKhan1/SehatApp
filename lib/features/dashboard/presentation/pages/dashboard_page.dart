@@ -13,6 +13,7 @@ import 'package:sehatapp/features/dashboard/presentation/widgets/dashboard_heade
 import 'package:sehatapp/features/dashboard/presentation/widgets/our_contribution_grid.dart';
 import 'package:sehatapp/features/dashboard/presentation/widgets/post_card.dart';
 import 'package:sehatapp/features/dashboard/presentation/widgets/search_bar.dart';
+import 'package:sehatapp/features/notification/presentation/cubit/notification_cubit.dart';
 import 'package:sehatapp/features/post_request/data/post_repository.dart';
 import 'package:sehatapp/features/recently_viewed/bloc/recently_viewed_cubit.dart';
 import 'package:sehatapp/features/recently_viewed/presentation/widgets/recently_viewed_list.dart';
@@ -27,12 +28,42 @@ class DashboardPage extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     final stats = [
-      ContributionStat(value: '1K+', label: tx.bloodDonor, bg: const Color(0xFFF0F6FF), valueColor: const Color(0xFF4E9AF1)),
-      ContributionStat(value: '20', label: tx.postEveryday, bg: const Color(0xFFEFFAF1), valueColor: const Color(0xFF29A064)),
-      ContributionStat(value: '20', label: tx.postEveryday, bg: const Color(0xFFF2F2FF), valueColor: const Color(0xFF6B6AF6)),
-      ContributionStat(value: '1K+', label: tx.bloodDonor, bg: const Color(0xFFFCF2FF), valueColor: const Color(0xFFCD69E5)),
-      ContributionStat(value: '20', label: tx.postEveryday, bg: const Color(0xFFFFF0F0), valueColor: const Color(0xFFFF6B6B)),
-      ContributionStat(value: '20', label: tx.postEveryday, bg: const Color(0xFFFFFAEE), valueColor: const Color(0xFFFFC12E)),
+      ContributionStat(
+        value: '1K+',
+        label: tx.bloodDonor,
+        bg: const Color(0xFFF0F6FF),
+        valueColor: const Color(0xFF4E9AF1),
+      ),
+      ContributionStat(
+        value: '20',
+        label: tx.postEveryday,
+        bg: const Color(0xFFEFFAF1),
+        valueColor: const Color(0xFF29A064),
+      ),
+      ContributionStat(
+        value: '20',
+        label: tx.postEveryday,
+        bg: const Color(0xFFF2F2FF),
+        valueColor: const Color(0xFF6B6AF6),
+      ),
+      ContributionStat(
+        value: '1K+',
+        label: tx.bloodDonor,
+        bg: const Color(0xFFFCF2FF),
+        valueColor: const Color(0xFFCD69E5),
+      ),
+      ContributionStat(
+        value: '20',
+        label: tx.postEveryday,
+        bg: const Color(0xFFFFF0F0),
+        valueColor: const Color(0xFFFF6B6B),
+      ),
+      ContributionStat(
+        value: '20',
+        label: tx.postEveryday,
+        bg: const Color(0xFFFFFAEE),
+        valueColor: const Color(0xFFFFC12E),
+      ),
     ];
 
     return BlocProvider(
@@ -41,7 +72,9 @@ class DashboardPage extends StatelessWidget {
         appBar: PreferredSize(
           preferredSize: const DashboardHeader().preferredSize,
           child: FutureBuilder<Map<String, dynamic>>(
-            future: uid == null ? Future.value({'name': 'User name', 'wantToDonate': false}) : repo.getUserWithCache(uid),
+            future: uid == null
+                ? Future.value({'name': 'User name', 'wantToDonate': false})
+                : repo.getUserWithCache(uid),
             builder: (context, snap) {
               String name = 'User name';
               bool donateOn = false;
@@ -50,7 +83,17 @@ class DashboardPage extends StatelessWidget {
                 name = (data['name'] ?? name) as String;
                 donateOn = (data['wantToDonate'] ?? false) as bool;
               }
-              return DashboardHeader(userName: name, donateOn: donateOn);
+              return BlocBuilder<NotificationCubit, NotificationState>(
+                builder: (context, notificationState) {
+                  return DashboardHeader(
+                    userName: name,
+                    donateOn: donateOn,
+                    notificationCount: notificationState.unreadCount,
+                    onNotificationsTap: () =>
+                        context.pushNamed('notifications'),
+                  );
+                },
+              );
             },
           ),
         ),
@@ -76,42 +119,60 @@ class DashboardPage extends StatelessWidget {
                         Row(
                           mainAxisAlignment: .spaceBetween,
                           children: [
-                            Text(tx.bloodGroupTitle, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            Text(
+                              tx.bloodGroupTitle,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
                             TextButton(
                               style: TextButton.styleFrom(
                                 foregroundColor: AppTheme.primary,
                               ),
-                              onPressed: () => context.pushNamed('recentlyViewed'),
-                              child: Text('View all', style: Theme.of(context).textTheme.bodyMedium),
+                              onPressed: () =>
+                                  context.pushNamed('recentlyViewed'),
+                              child: Text(
+                                'View all',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
                             ),
                           ],
                         ),
                         SizedBox(height: 10.h),
                         RecentlyViewedList(
-                          items: items.map((p) => RecentlyViewedItem(
-                            id: (p['id'] ?? '') as String,
-                            title: (p['name'] ?? '') as String,
-                            hospital: (p['hospital'] ?? '') as String,
-                            date: (p['date'] ?? '') as String,
-                            bloodGroup: (p['bloodGroup'] ?? '') as String,
-                            mobile: (p['mobile'] ?? '') as String?,
-                            bags: (p['bags'] ?? '') as String?,
-                            country: (p['country'] ?? '') as String?,
-                            city: (p['city'] ?? '') as String?,
-                          )).toList(),
+                          items: items
+                              .map(
+                                (p) => RecentlyViewedItem(
+                                  id: (p['id'] ?? '') as String,
+                                  title: (p['name'] ?? '') as String,
+                                  hospital: (p['hospital'] ?? '') as String,
+                                  date: (p['date'] ?? '') as String,
+                                  bloodGroup: (p['bloodGroup'] ?? '') as String,
+                                  mobile: (p['mobile'] ?? '') as String?,
+                                  bags: (p['bags'] ?? '') as String?,
+                                  country: (p['country'] ?? '') as String?,
+                                  city: (p['city'] ?? '') as String?,
+                                ),
+                              )
+                              .toList(),
                           onItemTap: (item) {
-                            final full = items.firstWhere((e) => (e['id'] ?? '') == item.id, orElse: () => {
-                              'id': item.id,
-                              'name': item.title,
-                              'hospital': item.hospital,
-                              'date': item.date,
-                              'bloodGroup': item.bloodGroup,
-                              'mobile': item.mobile,
-                              'bags': item.bags,
-                              'country': item.country,
-                              'city': item.city,
-                            });
-                            context.pushNamed('bloodRequestDetails', extra: full);
+                            final full = items.firstWhere(
+                              (e) => (e['id'] ?? '') == item.id,
+                              orElse: () => {
+                                'id': item.id,
+                                'name': item.title,
+                                'hospital': item.hospital,
+                                'date': item.date,
+                                'bloodGroup': item.bloodGroup,
+                                'mobile': item.mobile,
+                                'bags': item.bags,
+                                'country': item.country,
+                                'city': item.city,
+                              },
+                            );
+                            context.pushNamed(
+                              'bloodRequestDetails',
+                              extra: full,
+                            );
                           },
                         ),
                         SizedBox(height: 8.h),
@@ -122,17 +183,27 @@ class DashboardPage extends StatelessWidget {
                 SizedBox(height: 24.h),
                 OurContributionGrid(stats: stats),
                 SizedBox(height: 24.h),
-                Center(child: Text(tx.welcomeDashboard, textAlign: TextAlign.center)),
+                Center(
+                  child: Text(tx.welcomeDashboard, textAlign: TextAlign.center),
+                ),
                 SizedBox(height: 24.h),
-                Text(tx.recentPostsTitle, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  tx.recentPostsTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 SizedBox(height: 8.h),
                 BlocBuilder<PostsCubit, PostsState>(
                   builder: (context, state) {
                     if (state.loading) {
-                      return Column(children: List.generate(3, (i) => _PostShimmer()));
+                      return Column(
+                        children: List.generate(3, (i) => _PostShimmer()),
+                      );
                     }
                     if (state.error != null) {
-                      return Text(state.error!, style: const TextStyle(color: Colors.red));
+                      return Text(
+                        state.error!,
+                        style: const TextStyle(color: Colors.red),
+                      );
                     }
                     if (state.posts.isEmpty) {
                       return Text(tx.noPostsFound);
@@ -164,7 +235,10 @@ class _PostShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 8.h),
-      decoration: BoxDecoration(color: const Color(0xFFF3F3F3), borderRadius: BorderRadius.circular(12.r)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F3F3),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
       height: 110.h,
     );
   }

@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:sehatapp/features/call/domain/entities/call_session.dart';
@@ -10,6 +12,8 @@ import 'package:sehatapp/features/call/presentation/managers/call_audio_manager.
 import 'package:sehatapp/features/call/presentation/managers/call_duration_manager.dart';
 import 'package:sehatapp/features/call/presentation/managers/call_notification_manager.dart';
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
+import 'package:sehatapp/core/services/network_service.dart';
+import 'package:sehatapp/l10n/app_localizations.dart';
 
 /// CallState represents the current state of a call
 class CallState {
@@ -204,6 +208,7 @@ class CallCubit extends Cubit<CallState> {
   CallOutcomeType? _overrideOutcome;
   bool _hasEmittedOutcome = false;
   final _outcomeController = StreamController<CallOutcome>.broadcast();
+  String? _pendingCalleeUid;
 
   Stream<CallOutcome> get outcomes => _outcomeController.stream;
 
@@ -228,8 +233,23 @@ class CallCubit extends Cubit<CallState> {
     required String calleeUid,
     required String calleeName,
     required CallType type,
+    BuildContext? context,
   }) async {
     try {
+      // Check network connectivity first
+      final isConnected = await NetworkService().isConnected;
+      if (!isConnected) {
+        if (!isClosed) {
+          _emitWithSideEffects(
+            state.copyWith(
+              error: 'no_internet_for_call',
+              phase: CallPhase.ended,
+            ),
+          );
+        }
+        return;
+      }
+
       final user = _auth.currentUser;
       if (user == null) {
         if (!isClosed) {
@@ -241,6 +261,8 @@ class CallCubit extends Cubit<CallState> {
       }
 
       _resetTrackingForNewCall();
+      _pendingCalleeUid =
+          calleeUid; // Track pending callee for fast cancellation
 
       final callerName = (user.displayName ?? '').trim();
       final safeCallerName = callerName.isNotEmpty
@@ -274,7 +296,32 @@ class CallCubit extends Cubit<CallState> {
           calleeName: calleeName,
           type: type,
         );
+
+        // IMMEDIATE STATE UPDATE: Store the session ID so hangup() works
+        if (!isClosed) {
+          final provisionalSession = CallSession(
+            id: callId,
+            callerUid: user.uid,
+            calleeUid: calleeUid,
+            callerName: safeCallerName,
+            calleeName: calleeName,
+            type: type,
+            status: CallStatus.ringing,
+            createdAt: Timestamp.now(),
+          );
+          _emitWithSideEffects(
+            state.copyWith(
+              session: provisionalSession,
+              loading: false,
+              phase: CallPhase.outgoing,
+            ),
+            skipSideEffects:
+                true, // Don't trigger side effects yet, just safe storage
+          );
+        }
+        // Keep _pendingCalleeUid until hangup() completes cleanup
       } catch (e) {
+        _pendingCalleeUid = null; // Clear on creation failure
         if (!isClosed) {
           _emitWithSideEffects(
             state.copyWith(
@@ -294,6 +341,7 @@ class CallCubit extends Cubit<CallState> {
         otherUid: calleeUid,
       );
     } catch (e, _) {
+      _pendingCalleeUid = null;
       _emitWithSideEffects(
         state.copyWith(
           error: 'Failed to start call: $e',
@@ -394,6 +442,14 @@ class CallCubit extends Cubit<CallState> {
 
   Future<void> hangup({String? reason}) async {
     try {
+      if (kDebugMode) {
+        print('[CallCubit] ========== HANGUP CALLED ==========');
+        print('[CallCubit] Reason: $reason');
+        print('[CallCubit] Current session: ${state.session?.id}');
+        print('[CallCubit] Pending callee UID: $_pendingCalleeUid');
+        print('[CallCubit] Current phase: ${state.phase}');
+      }
+
       _durationManager.stop();
       _resolveOutcomeOnEnd(status: state.session?.status);
       _stopRingingTimer();
@@ -403,17 +459,20 @@ class CallCubit extends Cubit<CallState> {
         _pc = null;
       } catch (e) {
         if (kDebugMode) {
-          print(e);
+          print('[CallCubit] Error closing peer connection: $e');
         }
       }
 
       final id = state.session?.id;
       if (id != null) {
+        if (kDebugMode) {
+          print('[CallCubit] Ending call session: $id');
+        }
         try {
           await repo.endCall(id, reason: reason);
         } catch (e) {
           if (kDebugMode) {
-            print(e);
+            print('[CallCubit] Error ending call: $e');
           }
         }
       }
@@ -421,24 +480,79 @@ class CallCubit extends Cubit<CallState> {
       final me = _auth.currentUser?.uid;
       final session = state.session;
 
+      if (kDebugMode) {
+        print('[CallCubit] My UID: $me');
+        print('[CallCubit] Session caller: ${session?.callerUid}');
+        print('[CallCubit] Session callee: ${session?.calleeUid}');
+      }
+
       // If I am the caller, clear the callee's incoming request so they stop ringing
+      String? targetCalleeUid;
       if (session != null && me != null && session.callerUid == me) {
-        try {
-          await repo.clearIncoming(session.calleeUid);
-        } catch (e) {
-          if (kDebugMode) {
-            print(e);
-          }
+        targetCalleeUid = session.calleeUid;
+        if (kDebugMode) {
+          print('[CallCubit] I am the CALLER, target callee: $targetCalleeUid');
+        }
+      } else if (_pendingCalleeUid != null) {
+        // Fallback for fast cancellation
+        targetCalleeUid = _pendingCalleeUid;
+        if (kDebugMode) {
+          print('[CallCubit] Using PENDING callee UID: $targetCalleeUid');
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+            '[CallCubit] No target callee to clear (I might be the receiver)',
+          );
         }
       }
 
+      if (targetCalleeUid != null) {
+        if (kDebugMode) {
+          print(
+            '[CallCubit] *** CLEARING INCOMING CALL FOR: $targetCalleeUid ***',
+          );
+        }
+        try {
+          // Double-tap: Update status first to ensure listener catches it as non-ringing
+          if (kDebugMode) {
+            print(
+              '[CallCubit] Step 1: Updating status to MISSED for $targetCalleeUid',
+            );
+          }
+          await repo.updateIncomingStatus(targetCalleeUid, CallStatus.missed);
+
+          if (kDebugMode) {
+            print(
+              '[CallCubit] Step 2: Removing incoming node for $targetCalleeUid',
+            );
+          }
+          await repo.clearIncoming(targetCalleeUid);
+
+          if (kDebugMode) {
+            print(
+              '[CallCubit] ✓ Successfully cleared incoming for $targetCalleeUid',
+            );
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('[CallCubit] ✗ ERROR clearing incoming: $e');
+          }
+        }
+      }
+      _pendingCalleeUid = null;
+
       // Always clear my own incoming request (e.g. if I am rejecting a call)
       if (me != null) {
+        if (kDebugMode) {
+          print('[CallCubit] Clearing my own incoming request: $me');
+        }
         try {
+          await repo.updateIncomingStatus(me, CallStatus.ended);
           await repo.clearIncoming(me);
         } catch (e) {
           if (kDebugMode) {
-            print(e);
+            print('[CallCubit] Error clearing own incoming: $e');
           }
         }
       }
@@ -533,8 +647,17 @@ class CallCubit extends Cubit<CallState> {
               _emitWithSideEffects(
                 state.copyWith(session: incoming, phase: CallPhase.incoming),
               );
-              // Show Local Notification
-              await _notificationManager.showIncomingNotification(incoming);
+              // Show Local Notification ONLY if app is NOT in foreground
+              if (WidgetsBinding.instance.lifecycleState !=
+                  AppLifecycleState.resumed) {
+                await _notificationManager.showIncomingNotification(incoming);
+              } else {
+                if (kDebugMode) {
+                  print(
+                    '[CallCubit] App in foreground - suppressing call notification',
+                  );
+                }
+              }
             }
             _startRingingTimeout(incoming, isIncoming: true);
           } else {
@@ -545,21 +668,42 @@ class CallCubit extends Cubit<CallState> {
             }
           }
         } else {
-          if (state.phase == CallPhase.incoming) {
-            if (kDebugMode) {
-              print('[CallCubit] Incoming call cleared, ending incoming phase');
-            }
-            _stopRingingTimer();
-            // Cancel notification if stopped ringing
-            final sessionId = state.session?.id;
-            if (sessionId != null) {
-              await _notificationManager.cancel(sessionId);
-            } else {
-              await _notificationManager.cancelAll();
-            }
+          // Incoming call signal removed (e.g. Sender cancelled)
+          if (kDebugMode) {
+            print('[CallCubit] ========== INCOMING SIGNAL REMOVED ==========');
+            print('[CallCubit] Current phase: ${state.phase}');
+            print('[CallCubit] Current session: ${state.session?.id}');
+          }
 
+          _stopRingingTimer();
+          await _notificationManager.cancelAll();
+
+          // Check if we need to terminate the UI
+          // We end if we are in 'incoming' phase
+          // OR if we are 'connecting' (accepted but not live) and we are the callee
+          final isInboundConnecting =
+              state.phase == CallPhase.connecting &&
+              _isCurrentUserCallee(state.session);
+
+          if (kDebugMode) {
+            print('[CallCubit] Is inbound connecting: $isInboundConnecting');
+            print(
+              '[CallCubit] Should end UI: ${state.phase == CallPhase.incoming || isInboundConnecting}',
+            );
+          }
+
+          if (state.phase == CallPhase.incoming || isInboundConnecting) {
+            if (kDebugMode) {
+              print(
+                '[CallCubit] *** ENDING CALL PHASE DUE TO SIGNAL REMOVAL ***',
+              );
+            }
             if (!isClosed) {
               _emitWithSideEffects(state.copyWith(phase: CallPhase.ended));
+            }
+          } else {
+            if (kDebugMode) {
+              print('[CallCubit] Not ending - phase is ${state.phase}');
             }
           }
         }
@@ -1071,7 +1215,12 @@ class CallCubit extends Cubit<CallState> {
   void _listenCallUpdates(String callId) {
     _callSub?.cancel();
     _callSub = repo.watchCall(callId).listen((session) async {
-      if (session == null || isClosed) return;
+      if (isClosed) return;
+      if (session == null) {
+        // Session removed, call ended remotely
+        await hangup(reason: 'ended');
+        return;
+      }
 
       if (!isClosed) {
         final phase = _mapPhaseForSession(session);
@@ -1304,7 +1453,7 @@ class CallCubit extends Cubit<CallState> {
     }
 
     chatRepo.sendMessage(
-      conversationId: chatRepo.conversationId(
+      conversationId: ChatRepository.conversationId(
         session.callerUid,
         session.calleeUid,
       ),

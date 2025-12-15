@@ -10,11 +10,15 @@ import 'package:sehatapp/features/blood_request/bloc/blood_request_cubit.dart';
 import 'package:sehatapp/features/blood_request/data/blood_request_repository.dart';
 import 'package:sehatapp/features/call/data/call_repository_impl.dart';
 import 'package:sehatapp/features/call/presentation/cubit/call_cubit.dart';
-
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
 import 'package:sehatapp/features/chat/presentation/cubit/chat_cubit.dart';
 import 'package:sehatapp/features/chat/presentation/cubit/inbox_cubit.dart';
 import 'package:sehatapp/features/dashboard/bloc/banner_cubit.dart';
+import 'package:sehatapp/features/notification/data/repositories/notification_repository_impl.dart';
+import 'package:sehatapp/features/notification/domain/usecases/get_notifications_usecase.dart';
+import 'package:sehatapp/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
+import 'package:sehatapp/features/notification/domain/usecases/mark_notification_read_usecase.dart';
+import 'package:sehatapp/features/notification/presentation/cubit/notification_cubit.dart';
 import 'package:sehatapp/features/onboarding/bloc/onboarding_cubit.dart';
 import 'package:sehatapp/features/post_request/bloc/create_post_cubit.dart';
 import 'package:sehatapp/features/post_request/data/post_repository.dart';
@@ -24,6 +28,8 @@ import 'package:sehatapp/features/recently_viewed/data/recently_viewed_repositor
 import 'package:sehatapp/features/search/bloc/search_cubit.dart';
 import 'package:sehatapp/features/search/data/search_repository.dart';
 import 'package:sehatapp/features/splash/bloc/splash_cubit.dart';
+import 'package:sehatapp/core/network/network_status_cubit.dart';
+import 'package:sehatapp/core/services/network_service.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({
@@ -43,8 +49,13 @@ class AppProviders extends StatelessWidget {
     final searchRepo = SearchRepository();
     final chatRepo = ChatRepository();
     final callRepo = CallRepository();
+    final notificationRepo = NotificationRepositoryImpl();
     return MultiBlocProvider(
       providers: [
+        // Network status monitoring (global)
+        BlocProvider<NetworkStatusCubit>(
+          create: (_) => NetworkStatusCubit(NetworkService()),
+        ),
         BlocProvider<SplashCubit>(create: (_) => SplashCubit()),
         BlocProvider<OnboardingCubit>(create: (_) => OnboardingCubit()),
         BlocProvider<SignupCubit>(
@@ -74,6 +85,17 @@ class AppProviders extends StatelessWidget {
         BlocProvider<ChatCubit>(create: (_) => ChatCubit(chatRepo, userRepo)),
         BlocProvider<CallCubit>(
           create: (_) => CallCubit(callRepo, chatRepo: chatRepo),
+        ),
+        BlocProvider<NotificationCubit>(
+          create: (_) => NotificationCubit(
+            getNotificationsUseCase: GetNotificationsUseCase(notificationRepo),
+            markNotificationReadUseCase: MarkNotificationReadUseCase(
+              notificationRepo,
+            ),
+            markAllNotificationsReadUseCase: MarkAllNotificationsReadUseCase(
+              notificationRepo,
+            ),
+          ),
         ),
         // Load preview so dashboard shows items
         BlocProvider(

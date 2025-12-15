@@ -226,5 +226,28 @@ class AppLocalizationsHi extends AppLocalizations {
       'क्या आप सुनिश्चित हैं, क्या आप लॉग आउट करना चाहते हैं?';
 
   @override
+  String get noInternetConnection => 'इंटरनेट कनेक्शन नहीं है';
+
+  @override
+  String get checkingConnection => 'कनेक्शन जांचा जा रहा है...';
+
+  @override
+  String get retry => 'पुनः प्रयास करें';
+
+  @override
+  String get checkYourConnection => 'अपना कनेक्शन जांचें';
+
+  @override
+  String get noInternetForCall =>
+      'इंटरनेट कनेक्शन उपलब्ध नहीं है। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।';
+
+  @override
+  String get noInternetForPost =>
+      'इंटरनेट कनेक्शन नहीं है। पोस्ट बनाने के लिए कृपया इंटरनेट से कनेक्ट करें।';
+
+  @override
+  String get ok => 'ठीक है';
+
+  @override
   String get cancel => 'रद्द करें';
 }

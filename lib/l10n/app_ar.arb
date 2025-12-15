@@ -69,5 +69,12 @@
   "postEveryday": "منشورات يومية",
   "areYouSureDeleteAccount": "هل أنت متأكد، هل تريد حذف الحساب؟",
   "areYouSureLogout": "هل أنت متأكد، هل تريد تسجيل الخروج؟",
+  "noInternetConnection": "لا يوجد اتصال بالإنترنت",
+  "checkingConnection": "جاري التحقق من الاتصال...",
+  "retry": "إعادة المحاولة",
+  "checkYourConnection": "تحقق من اتصالك",
+  "noInternetForCall": "لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.",
+  "noInternetForPost": "لا يوجد اتصال بالإنترنت. يرجى الاتصال بالإنترنت لإنشاء منشور.",
+  "ok": "حسناً",
   "cancel": "إلغاء"
 }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +11,11 @@ import 'package:sehatapp/core/providers/app_providers.dart';
 import 'package:sehatapp/core/router/app_router.dart';
 import 'package:sehatapp/core/theme/app_theme.dart';
 import 'package:sehatapp/features/call/presentation/widgets/call_listener.dart';
+import 'package:sehatapp/features/notification/data/notification_service.dart';
 import 'package:sehatapp/firebase_options.dart';
 import 'package:sehatapp/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sehatapp/core/widgets/network_status_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +28,12 @@ Future<void> main() async {
     );
   }
 
+  // Enable Firestore offline persistence
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
   // Check if user should stay logged in
   // If not explicitly set, sign out to prevent auto-login from cached credentials
   final stayLoggedIn = prefs.getBool('stay_logged_in') ?? false;
@@ -35,6 +44,13 @@ Future<void> main() async {
     } catch (e) {
       debugPrint('[Main] Error signing out: $e');
     }
+  }
+
+  // Initialize Notifications (FCM)
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint('Failed to init notifications: $e');
   }
 
   runApp(MyApp(initialLocale: initialLocale));
@@ -70,7 +86,9 @@ class MyApp extends StatelessWidget {
                 AppLocalizations.delegate,
               ],
               builder: (context, child) {
-                return CallListener(child: child ?? const SizedBox.shrink());
+                return NetworkStatusBanner(
+                  child: CallListener(child: child ?? const SizedBox.shrink()),
+                );
               },
             );
           },

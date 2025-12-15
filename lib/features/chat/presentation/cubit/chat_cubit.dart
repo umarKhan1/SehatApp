@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sehatapp/features/chat/data/chat_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sehatapp/features/auth/data/user_repository.dart';
+import 'package:sehatapp/features/chat/data/chat_repository.dart';
+import 'package:sehatapp/core/services/network_service.dart';
 
 class ChatState {
-  static const _keep = Object();
   const ChatState({
     this.loading = false,
     this.error,
@@ -19,6 +20,7 @@ class ChatState {
     this.replyPreviewText,
     this.highlightedMessageId,
   });
+  static const _keep = Object();
   final bool loading;
   final String? error;
   final String? conversationId;
@@ -40,19 +42,24 @@ class ChatState {
     Object? replyToMessageId = _keep,
     Object? replyPreviewText = _keep,
     Object? highlightedMessageId = _keep,
-  }) =>
-      ChatState(
-        loading: loading ?? this.loading,
-        error: error,
-        conversationId: conversationId ?? this.conversationId,
-        otherUid: otherUid ?? this.otherUid,
-        messages: messages ?? this.messages,
-        typingOther: typingOther ?? this.typingOther,
-        lastReadAtOther: lastReadAtOther ?? this.lastReadAtOther,
-        replyToMessageId: replyToMessageId == _keep ? this.replyToMessageId : replyToMessageId as String?,
-        replyPreviewText: replyPreviewText == _keep ? this.replyPreviewText : replyPreviewText as String?,
-        highlightedMessageId: highlightedMessageId == _keep ? this.highlightedMessageId : highlightedMessageId as String?,
-      );
+  }) => ChatState(
+    loading: loading ?? this.loading,
+    error: error,
+    conversationId: conversationId ?? this.conversationId,
+    otherUid: otherUid ?? this.otherUid,
+    messages: messages ?? this.messages,
+    typingOther: typingOther ?? this.typingOther,
+    lastReadAtOther: lastReadAtOther ?? this.lastReadAtOther,
+    replyToMessageId: replyToMessageId == _keep
+        ? this.replyToMessageId
+        : replyToMessageId as String?,
+    replyPreviewText: replyPreviewText == _keep
+        ? this.replyPreviewText
+        : replyPreviewText as String?,
+    highlightedMessageId: highlightedMessageId == _keep
+        ? this.highlightedMessageId
+        : highlightedMessageId as String?,
+  );
 }
 
 class ChatCubit extends Cubit<ChatState> {
@@ -70,6 +77,9 @@ class ChatCubit extends Cubit<ChatState> {
   String? _replyToMessageId;
   String? _replyPreviewText;
 
+  // Network status subscription for auto-sending pending messages
+  StreamSubscription<bool>? _networkSub;
+
   Future<void> init({required String otherUid, String? otherName}) async {
     final uid = _uid;
     if (uid == null) {
@@ -77,19 +87,34 @@ class ChatCubit extends Cubit<ChatState> {
       return;
     }
     emit(state.copyWith(loading: true));
+
+    // Listen to network status changes to auto-send pending messages
+    _networkSub?.cancel();
+    _networkSub = NetworkService().connectivityStream.listen((isConnected) {
+      if (isConnected) {
+        _sendPendingMessages();
+      }
+    });
     // Fetch display names
     final meDoc = await userRepo.getUserWithCache(uid);
     final otherDoc = await userRepo.getUserWithCache(otherUid);
     final myName = (meDoc['name'] ?? '') as String;
     final otherDisplayName = (otherDoc['name'] ?? otherName ?? '') as String;
-    final convId = await repo.getOrCreateConversation(a: uid, b: otherUid, aName: myName, bName: otherDisplayName);
-    emit(state.copyWith(
-      conversationId: convId,
-      otherUid: otherUid,
-      // Always preserve reply state on init
-      replyToMessageId: _replyToMessageId,
-      replyPreviewText: _replyPreviewText,
-    ));
+    final convId = await repo.getOrCreateConversation(
+      a: uid,
+      b: otherUid,
+      aName: myName,
+      bName: otherDisplayName,
+    );
+    emit(
+      state.copyWith(
+        conversationId: convId,
+        otherUid: otherUid,
+        // Always preserve reply state on init
+        replyToMessageId: _replyToMessageId,
+        replyPreviewText: _replyPreviewText,
+      ),
+    );
     _sub?.cancel();
     _sub = repo.streamMessages(convId).listen(
       (msgs) {
@@ -114,14 +139,15 @@ class ChatCubit extends Cubit<ChatState> {
           );
         }).toList();
         // Always persist reply state using private fields
-        print('[DEBUG] streamMessages emit: replyToMessageId=$_replyToMessageId, replyPreviewText=$_replyPreviewText');
-        emit(state.copyWith(
-          loading: false,
-          messages: merged,
-          replyToMessageId: _replyToMessageId,
-          replyPreviewText: _replyPreviewText,
-          highlightedMessageId: state.highlightedMessageId,
-        ));
+        emit(
+          state.copyWith(
+            loading: false,
+            messages: merged,
+            replyToMessageId: _replyToMessageId,
+            replyPreviewText: _replyPreviewText,
+            highlightedMessageId: state.highlightedMessageId,
+          ),
+        );
       },
       onError: (e) => emit(state.copyWith(loading: false, error: e.toString())),
     );
@@ -135,15 +161,22 @@ class ChatCubit extends Cubit<ChatState> {
       final ts = lastReadMap[other];
       DateTime? dt;
       if (ts is Timestamp) dt = ts.toDate();
-      emit(state.copyWith(
-        lastReadAtOther: dt,
-        replyToMessageId: _replyToMessageId,
-        replyPreviewText: _replyPreviewText,
-        highlightedMessageId: state.highlightedMessageId,
-      ));
+      emit(
+        state.copyWith(
+          lastReadAtOther: dt,
+          replyToMessageId: _replyToMessageId,
+          replyPreviewText: _replyPreviewText,
+          highlightedMessageId: state.highlightedMessageId,
+        ),
+      );
     });
     // Mark messages as read when opening
     await repo.markRead(conversationId: convId, readerUid: uid);
+  }
+
+  /// Retry loading conversation (called when user taps retry button)
+  Future<void> retry({required String otherUid, String? otherName}) async {
+    await init(otherUid: otherUid, otherName: otherName);
   }
 
   Future<void> send(String text) async {
@@ -153,7 +186,41 @@ class ChatCubit extends Cubit<ChatState> {
       final uid = _uid;
       final convId = state.conversationId;
       final otherUid = state.otherUid;
-      if (uid == null || convId == null || otherUid == null || text.trim().isEmpty) return;
+      if (uid == null ||
+          convId == null ||
+          otherUid == null ||
+          text.trim().isEmpty) {
+        return;
+      }
+
+      // Check network connectivity
+      final isConnected = await NetworkService().isConnected;
+
+      if (!isConnected) {
+        // Add message to UI with 'pending' status
+        final pendingMessage = MessageItem(
+          id: 'pending_${DateTime.now().millisecondsSinceEpoch}',
+          fromUid: uid,
+          toUid: otherUid,
+          text: text.trim(),
+          createdAt: Timestamp.now(),
+          status: 'pending', // Special status for offline messages
+          replyToMessageId: _replyToMessageId,
+          replyPreviewText: _replyPreviewText,
+        );
+
+        // Add to current messages
+        final updatedMessages = [...state.messages, pendingMessage];
+        emit(state.copyWith(messages: updatedMessages));
+
+        // Clear reply state
+        _replyToMessageId = null;
+        _replyPreviewText = null;
+        emit(state.copyWith(replyToMessageId: null, replyPreviewText: null));
+        return;
+      }
+
+      // Online - send normally
       await repo.sendMessage(
         conversationId: convId,
         fromUid: uid,
@@ -162,7 +229,6 @@ class ChatCubit extends Cubit<ChatState> {
         replyToMessageId: _replyToMessageId,
         replyPreviewText: _replyPreviewText,
       );
-      print('[DEBUG] send: clearing reply state');
       _replyToMessageId = null;
       _replyPreviewText = null;
       emit(state.copyWith(replyToMessageId: null, replyPreviewText: null));
@@ -172,17 +238,19 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   void startReply({required String messageId, required String preview}) {
-    print('[DEBUG] startReply: $messageId, $preview');
     _replyToMessageId = messageId;
     _replyPreviewText = preview;
-    emit(state.copyWith(replyToMessageId: messageId, replyPreviewText: preview));
+    emit(
+      state.copyWith(replyToMessageId: messageId, replyPreviewText: preview),
+    );
   }
+
   void cancelReply() {
-    print('[DEBUG] cancelReply: clearing reply state');
     _replyToMessageId = null;
     _replyPreviewText = null;
     emit(state.copyWith(replyToMessageId: null, replyPreviewText: null));
   }
+
   Future<void> react({required String messageId, required String emoji}) async {
     final convId = state.conversationId;
     final uid = _uid;
@@ -214,28 +282,58 @@ class ChatCubit extends Cubit<ChatState> {
         type: target.type,
         metadata: target.metadata,
       );
-      emit(state.copyWith(messages: currentMessages, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+      emit(
+        state.copyWith(
+          messages: currentMessages,
+          replyToMessageId: _replyToMessageId,
+          replyPreviewText: _replyPreviewText,
+        ),
+      );
     }
 
-    await repo.reactToMessage(conversationId: convId, messageId: messageId, emoji: nextEmoji, userUid: uid);
+    await repo.reactToMessage(
+      conversationId: convId,
+      messageId: messageId,
+      emoji: nextEmoji,
+      userUid: uid,
+    );
   }
+
   Future<void> deleteMessage(String messageId) async {
     final convId = state.conversationId;
     final uid = _uid;
     if (convId == null || uid == null) return;
-    await repo.deleteMessage(conversationId: convId, messageId: messageId, requesterUid: uid);
+    await repo.deleteMessage(
+      conversationId: convId,
+      messageId: messageId,
+      requesterUid: uid,
+    );
   }
-  Future<void> reportMessage(String messageId, {String reason = 'inappropriate'}) async {
+
+  Future<void> reportMessage(
+    String messageId, {
+    String reason = 'inappropriate',
+  }) async {
     final convId = state.conversationId;
     if (convId == null) return;
-    await repo.reportMessage(conversationId: convId, messageId: messageId, reason: reason);
+    await repo.reportMessage(
+      conversationId: convId,
+      messageId: messageId,
+      reason: reason,
+    );
   }
 
   Future<void> setTyping(bool isTyping) async {
     final uid = _uid;
     final convId = state.conversationId;
     if (uid == null || convId == null) return;
-    emit(state.copyWith(typingOther: isTyping, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+    emit(
+      state.copyWith(
+        typingOther: isTyping,
+        replyToMessageId: _replyToMessageId,
+        replyPreviewText: _replyPreviewText,
+      ),
+    );
     await repo.setTyping(conversationId: convId, uid: uid, typing: isTyping);
   }
 
@@ -244,17 +342,72 @@ class ChatCubit extends Cubit<ChatState> {
     _highlightTimer?.cancel();
     await _sub?.cancel();
     await _convSub?.cancel();
+    await _networkSub?.cancel();
     return super.close();
   }
 
-  void highlightMessage(String? id, {Duration duration = const Duration(milliseconds: 900)}) {
+  /// Send all pending messages when connection is restored
+  Future<void> _sendPendingMessages() async {
+    final uid = _uid;
+    final convId = state.conversationId;
+    final otherUid = state.otherUid;
+
+    if (uid == null || convId == null || otherUid == null) return;
+
+    // Find all pending messages
+    final pendingMessages = state.messages
+        .where((m) => m.status == 'pending')
+        .toList();
+
+    if (pendingMessages.isEmpty) return;
+
+    // Send each pending message
+    for (final msg in pendingMessages) {
+      try {
+        await repo.sendMessage(
+          conversationId: convId,
+          fromUid: uid,
+          toUid: otherUid,
+          text: msg.text,
+          replyToMessageId: msg.replyToMessageId,
+          replyPreviewText: msg.replyPreviewText,
+        );
+
+        // Remove pending message from state (Firestore will add the real one)
+        final updatedMessages = state.messages
+            .where((m) => m.id != msg.id)
+            .toList();
+        emit(state.copyWith(messages: updatedMessages));
+      } catch (e) {
+        // If sending fails, keep the pending message
+        continue;
+      }
+    }
+  }
+
+  void highlightMessage(
+    String? id, {
+    Duration duration = const Duration(milliseconds: 900),
+  }) {
     _highlightTimer?.cancel();
-    emit(state.copyWith(highlightedMessageId: id, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+    emit(
+      state.copyWith(
+        highlightedMessageId: id,
+        replyToMessageId: _replyToMessageId,
+        replyPreviewText: _replyPreviewText,
+      ),
+    );
     if (id != null) {
       _highlightTimer = Timer(duration, () {
         final current = state.highlightedMessageId;
         if (current == id) {
-          emit(state.copyWith(highlightedMessageId: null, replyToMessageId: _replyToMessageId, replyPreviewText: _replyPreviewText));
+          emit(
+            state.copyWith(
+              highlightedMessageId: null,
+              replyToMessageId: _replyToMessageId,
+              replyPreviewText: _replyPreviewText,
+            ),
+          );
         }
       });
     }

@@ -221,5 +221,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get areYouSureLogout => 'هل أنت متأكد، هل تريد تسجيل الخروج؟';
 
   @override
+  String get noInternetConnection => 'لا يوجد اتصال بالإنترنت';
+
+  @override
+  String get checkingConnection => 'جاري التحقق من الاتصال...';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get checkYourConnection => 'تحقق من اتصالك';
+
+  @override
+  String get noInternetForCall =>
+      'لا يوجد اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.';
+
+  @override
+  String get noInternetForPost =>
+      'لا يوجد اتصال بالإنترنت. يرجى الاتصال بالإنترنت لإنشاء منشور.';
+
+  @override
+  String get ok => 'حسناً';
+
+  @override
   String get cancel => 'إلغاء';
 }

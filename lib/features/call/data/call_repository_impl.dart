@@ -113,18 +113,13 @@ class CallRepository implements ICallRepository {
     required String callId,
     required IceCandidateModel candidate,
   }) async {
-    await _sessionsRef
-        .child(callId)
-        .child('candidates')
-        .child(candidate.fromUid)
-        .push()
-        .set({
-          'fromUid': candidate.fromUid,
-          'candidate': candidate.candidate,
-          'sdpMid': candidate.sdpMid,
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-          'createdAt': ServerValue.timestamp,
-        });
+    await _sessionsRef.child(callId).child('candidates').push().set({
+      'fromUid': candidate.fromUid,
+      'candidate': candidate.candidate,
+      'sdpMid': candidate.sdpMid,
+      'sdpMLineIndex': candidate.sdpMLineIndex,
+      'createdAt': ServerValue.timestamp,
+    });
   }
 
   @override
@@ -136,25 +131,24 @@ class CallRepository implements ICallRepository {
         .child(callId)
         .child('candidates')
         .onChildAdded
-        .asyncExpand((event) async* {
-          final childKey = event.snapshot.key ?? '';
-          if (childKey == excludingUid) return;
+        .map((event) {
           final val = event.snapshot.value;
           if (val is Map) {
-            final map = val.cast<String, dynamic>();
-            for (final entry in map.entries) {
-              final data = entry.value;
-              if (data is Map) {
-                yield IceCandidateModel(
-                  fromUid: (data['fromUid'] ?? childKey) as String,
-                  candidate: (data['candidate'] ?? '') as String,
-                  sdpMid: data['sdpMid'] as String?,
-                  sdpMLineIndex: (data['sdpMLineIndex'] as num?)?.toInt(),
-                );
-              }
-            }
+            final data = val.cast<String, dynamic>();
+            final fromUid = data['fromUid'] as String?;
+            if (fromUid == excludingUid) return null;
+
+            return IceCandidateModel(
+              fromUid: fromUid ?? '',
+              candidate: (data['candidate'] ?? '') as String,
+              sdpMid: data['sdpMid'] as String?,
+              sdpMLineIndex: (data['sdpMLineIndex'] as num?)?.toInt(),
+            );
           }
-        });
+          return null;
+        })
+        .where((model) => model != null)
+        .cast<IceCandidateModel>();
   }
 
   @override

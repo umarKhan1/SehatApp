@@ -5,6 +5,7 @@ import 'package:sehatapp/features/chat/presentation/pages/inbox_page.dart';
 import 'package:sehatapp/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:sehatapp/features/more/presentation/pages/more_page.dart';
 import 'package:sehatapp/features/shell/bloc/shell_cubit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ShellPage extends StatelessWidget {
   const ShellPage({super.key});
@@ -19,11 +20,7 @@ class ShellPage extends StatelessWidget {
       create: (_) => ShellCubit(),
       child: BlocBuilder<ShellCubit, ShellState>(
         builder: (context, state) {
-          final pages = const [
-            DashboardPage(),
-            InboxPage(),
-            MorePage(),
-          ];
+          final pages = const [DashboardPage(), InboxPage(), MorePage()];
           return Scaffold(
             body: pages[state.index],
             bottomNavigationBar: BottomNavigationBar(
@@ -38,18 +35,21 @@ class ShellPage extends StatelessWidget {
               onTap: (i) => context.read<ShellCubit>().setTab(i),
               items: [
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home),
+                  icon: const FaIcon(FontAwesomeIcons.house, size: 20),
+                  activeIcon: const FaIcon(FontAwesomeIcons.house, size: 20),
                   label: tx.navHome,
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.message),
-                  activeIcon: const Icon(Icons.message),
+                  icon: const FaIcon(FontAwesomeIcons.message, size: 20),
+                  activeIcon: const FaIcon(
+                    FontAwesomeIcons.solidMessage,
+                    size: 20,
+                  ),
                   label: tx.navInbox,
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.grid_view),
-                  activeIcon: const Icon(Icons.grid_view),
+                  icon: const FaIcon(FontAwesomeIcons.grip, size: 20),
+                  activeIcon: const FaIcon(FontAwesomeIcons.grip, size: 20),
                   label: tx.navMore,
                 ),
               ],

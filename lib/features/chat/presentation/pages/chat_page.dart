@@ -49,15 +49,19 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final other = widget.otherUid;
       if (mounted && other != null && other.isNotEmpty) {
-        await context.read<ChatCubit>().init(
-          otherUid: other,
-          otherName: widget.title,
-        );
-        // Auto-scroll to bottom after messages load
-        if (mounted) {
-          // Small delay to ensure messages are rendered
-          await Future.delayed(const Duration(milliseconds: 100));
-          _scrollToBottom();
+        try {
+          await context.read<ChatCubit>().init(
+            otherUid: other,
+            otherName: widget.title,
+          );
+          // Auto-scroll to bottom after messages load
+          if (mounted) {
+            // Small delay to ensure messages are rendered
+            await Future.delayed(const Duration(milliseconds: 100));
+            _scrollToBottom();
+          }
+        } catch (e) {
+          debugPrint('[ChatPage] Error initializing chat: $e');
         }
       }
     });

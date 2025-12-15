@@ -225,5 +225,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get areYouSureLogout => 'Are you sure, you want to logout?';
 
   @override
+  String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get checkingConnection => 'Checking connection...';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get checkYourConnection => 'Check your connection';
+
+  @override
+  String get noInternetForCall =>
+      'No internet connection available. Please check your connection and try again.';
+
+  @override
+  String get noInternetForPost =>
+      'No internet connection. Please connect to the internet to create a post.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
   String get cancel => 'Cancel';
 }

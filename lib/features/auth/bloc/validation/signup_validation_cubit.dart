@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sehatapp/features/auth/bloc/signup/signup_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupValidationState {
   const SignupValidationState({
@@ -46,7 +47,8 @@ class SignupValidationState {
       isValid: isValid ?? this.isValid,
       submitting: submitting ?? this.submitting,
       passwordVisible: passwordVisible ?? this.passwordVisible,
-      confirmPasswordVisible: confirmPasswordVisible ?? this.confirmPasswordVisible,
+      confirmPasswordVisible:
+          confirmPasswordVisible ?? this.confirmPasswordVisible,
       error: error,
       success: success ?? this.success,
     );
@@ -54,18 +56,28 @@ class SignupValidationState {
 }
 
 class SignupValidationCubit extends Cubit<SignupValidationState> {
-  SignupValidationCubit(this.signupCubit) : super(const SignupValidationState());
+  SignupValidationCubit(this.signupCubit)
+    : super(const SignupValidationState());
   final SignupCubit signupCubit;
 
   void onNameChanged(String value) => _recalc(name: value);
   void onEmailChanged(String value) => _recalc(email: value);
   void onPasswordChanged(String value) => _recalc(password: value);
-  void onConfirmPasswordChanged(String value) => _recalc(confirmPassword: value);
+  void onConfirmPasswordChanged(String value) =>
+      _recalc(confirmPassword: value);
 
-  void togglePasswordVisibility() => emit(state.copyWith(passwordVisible: !state.passwordVisible));
-  void toggleConfirmPasswordVisibility() => emit(state.copyWith(confirmPasswordVisible: !state.confirmPasswordVisible));
+  void togglePasswordVisibility() =>
+      emit(state.copyWith(passwordVisible: !state.passwordVisible));
+  void toggleConfirmPasswordVisibility() => emit(
+    state.copyWith(confirmPasswordVisible: !state.confirmPasswordVisible),
+  );
 
-  void _recalc({String? name, String? email, String? password, String? confirmPassword}) {
+  void _recalc({
+    String? name,
+    String? email,
+    String? password,
+    String? confirmPassword,
+  }) {
     final next = state.copyWith(
       name: name,
       email: email,
@@ -89,10 +101,20 @@ class SignupValidationCubit extends Cubit<SignupValidationState> {
     if (!state.isValid) return;
     emit(state.copyWith(submitting: true, success: false));
     try {
-      await signupCubit.signUp(name: state.name.trim(), email: state.email.trim(), password: state.password.trim());
+      await signupCubit.signUp(
+        name: state.name.trim(),
+        email: state.email.trim(),
+        password: state.password.trim(),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('stay_logged_in', true);
+
       emit(state.copyWith(submitting: false, success: true));
     } catch (e) {
-      emit(state.copyWith(submitting: false, success: false, error: e.toString()));
+      emit(
+        state.copyWith(submitting: false, success: false, error: e.toString()),
+      );
     }
   }
 }

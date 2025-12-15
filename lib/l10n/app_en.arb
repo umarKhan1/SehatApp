@@ -69,5 +69,12 @@
   "postEveryday": "Post everyday",
   "areYouSureDeleteAccount": "Are you sure, you want to delete account?",
   "areYouSureLogout": "Are you sure, you want to logout?",
+  "noInternetConnection": "No internet connection",
+  "checkingConnection": "Checking connection...",
+  "retry": "Retry",
+  "checkYourConnection": "Check your connection",
+  "noInternetForCall": "No internet connection available. Please check your connection and try again.",
+  "noInternetForPost": "No internet connection. Please connect to the internet to create a post.",
+  "ok": "OK",
   "cancel": "Cancel"
 }

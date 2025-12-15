@@ -7,6 +7,7 @@ class MessageBubble extends StatelessWidget {
     required this.text,
     required this.isMe,
     required this.createdAt,
+    this.status = 'sent',
     this.reactions = const {},
     this.lastReadAtOther,
     this.replySenderName,
@@ -19,6 +20,7 @@ class MessageBubble extends StatelessWidget {
   final String text;
   final bool isMe;
   final DateTime createdAt;
+  final String status;
   final Map<String, String> reactions;
   final DateTime? lastReadAtOther;
   final String? replySenderName;
@@ -122,13 +124,25 @@ class MessageBubble extends StatelessWidget {
                         ),
                         if (isMe) ...[
                           SizedBox(width: 4.w),
-                          Icon(
-                            Icons.done_all,
-                            size: 16,
-                            color: isRead
-                                ? const Color(0xFF34B7F1)
-                                : Colors.black38, // blue when read
-                          ),
+                          if (status == 'pending')
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.black38,
+                                ),
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.done_all,
+                              size: 16,
+                              color: isRead
+                                  ? const Color(0xFF34B7F1)
+                                  : Colors.black38, // blue when read
+                            ),
                         ],
                       ],
                     ),

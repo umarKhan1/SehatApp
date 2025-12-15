@@ -53,6 +53,12 @@ dependencies:
   audioplayers: ^6.5.1
   flutter_ringtone_player: ^4.0.0+4
   flutter_local_notifications: ^19.5.0
+  firebase_messaging: ^16.0.4
+  http: ^1.6.0
+  googleapis_auth: ^2.0.0
+  connectivity_plus: ^6.1.2
+  firebase_analytics:
+  font_awesome_flutter: ^10.8.0 
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +70,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -86,3 +93,19 @@ flutter:
   # Optional: you can customize the l10n options
   # defaults: lib/l10n, AppLocalizations as class name
   # here we keep defaults, only ensuring directory exists
+
+# Flutter Launcher Icons Configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/applogo.png"
+  # Adaptive icon for Android (API 26+)
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/applogo.png"
+  # Notification icon (monochrome for Android)
+  android_notification_icon:
+    name: "notification_icon"
+    image_path: "assets/images/applogo.png"
+    color: "#FF0000"  # Red color for notification icon
+  # Remove alpha channel for iOS
+  remove_alpha_ios: true

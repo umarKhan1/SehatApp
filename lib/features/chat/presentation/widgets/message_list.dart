@@ -170,6 +170,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
                 text: bubbleText,
                 isMe: isMe,
                 createdAt: m.createdAt.toDate(),
+                status: m.status,
                 reactions: m.reactions,
                 lastReadAtOther: widget.lastReadAtOther,
                 replySenderName: replySenderName,

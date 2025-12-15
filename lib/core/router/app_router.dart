@@ -7,6 +7,7 @@ import 'package:sehatapp/features/blood_request/presentation/pages/blood_request
 import 'package:sehatapp/features/chat/presentation/pages/chat_page.dart';
 import 'package:sehatapp/features/chat/presentation/pages/inbox_page.dart';
 import 'package:sehatapp/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:sehatapp/features/notification/presentation/pages/notification_page.dart';
 import 'package:sehatapp/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step1_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step2_page.dart';
@@ -102,6 +103,11 @@ final GoRouter appRouter = GoRouter(
         final uid = extra?['uid'] as String? ?? '';
         return ChatPage(title: title, otherUid: uid);
       },
+    ),
+    GoRoute(
+      path: '/notifications',
+      name: 'notifications',
+      builder: (context, state) => const NotificationPage(),
     ),
   ],
 );

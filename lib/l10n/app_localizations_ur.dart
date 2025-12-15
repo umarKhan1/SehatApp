@@ -9,221 +9,245 @@ class AppLocalizationsUr extends AppLocalizations {
   AppLocalizationsUr([String locale = 'ur']) : super(locale);
 
   @override
-  String get appName => 'Sehat App';
+  String get appName => 'صحت ایپ';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'ترتیبات';
 
   @override
-  String get language => 'Language';
+  String get language => 'زبان';
 
   @override
-  String get mood => 'Mood';
+  String get mood => 'موڈ';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'اطلاعات';
 
   @override
-  String get shareApp => 'Share App';
+  String get shareApp => 'ایپ شیئر کریں';
 
   @override
-  String get deleteAccount => 'Delete Account';
+  String get deleteAccount => 'اکاؤنٹ حذف کریں';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'لاگ آؤٹ';
 
   @override
-  String get more => 'More';
+  String get more => 'مزید';
 
   @override
-  String get search => 'Search';
+  String get search => 'تلاش';
 
   @override
-  String get save => 'Save';
+  String get save => 'محفوظ کریں';
 
   @override
-  String get skip => 'Skip';
+  String get skip => 'چھوڑیں';
 
   @override
-  String get getStarted => 'Get Started';
+  String get getStarted => 'شروع کریں';
 
   @override
-  String get onboardingTitle1 => 'Donate to save lives';
+  String get onboardingTitle1 => 'جانیں بچانے کے لیے خون کا عطیہ کریں';
 
   @override
-  String get onboardingTitle2 => 'Find donors near you';
+  String get onboardingTitle2 => 'اپنے قریب ڈونرز تلاش کریں';
 
   @override
-  String get onboardingTitle3 => 'Join the Blood Care community';
+  String get onboardingTitle3 => 'بلڈ کیئر کمیونٹی میں شامل ہوں';
 
   @override
   String get onboardingDesc1 =>
-      'Shop smarter, dress bolder, and embrace your individuality to inspire and empower every fashion-forward individual.';
+      'سمارٹ خریداری کریں، دلیری سے پہنیں اور اپنی انفرادیت کو اپنائیں۔';
 
   @override
   String get onboardingDesc2 =>
-      'Discover curated collections and seamless experiences tailored just for you.';
+      'آپ کے لیے بنائے گئے کلیکشن اور بہترین تجربات دریافت کریں۔';
 
   @override
   String get onboardingDesc3 =>
-      'Join us and elevate your style with confidence.';
+      'ہم سے جڑیں اور اعتماد کے ساتھ اپنا اسٹائل بلند کریں۔';
 
   @override
-  String get loginWelcome => 'Welcome to Blood Care!';
+  String get loginWelcome => 'بلڈ کیئر میں خوش آمدید!';
 
   @override
-  String get loginSubtitle => 'Enter your email address and password to login';
+  String get loginSubtitle =>
+      'لاگ ان کرنے کے لیے اپنا ای میل اور پاس ورڈ درج کریں';
 
   @override
-  String get emailLabel => 'Email';
+  String get emailLabel => 'ای میل';
 
   @override
-  String get emailHint => 'Type Email';
+  String get emailHint => 'ای میل لکھیں';
 
   @override
-  String get passwordLabel => 'Password';
+  String get passwordLabel => 'پاس ورڈ';
 
   @override
-  String get passwordHint => 'Password';
+  String get passwordHint => 'پاس ورڈ';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'پاس ورڈ بھول گئے؟';
 
   @override
-  String get login => 'Login';
+  String get login => 'لاگ ان';
 
   @override
-  String get orLoginWith => 'OR Login with';
+  String get orLoginWith => 'یا لاگ ان کریں';
 
   @override
-  String get facebook => 'Facebook';
+  String get facebook => 'فیس بک';
 
   @override
-  String get google => 'Google';
+  String get google => 'گوگل';
 
   @override
-  String get dontHaveAccount => 'Don’t have an account?';
+  String get dontHaveAccount => 'کیا آپ کا اکاؤنٹ نہیں ہے؟';
 
   @override
-  String get signup => 'Signup';
+  String get signup => 'سائن اپ';
 
   @override
-  String get signupTitle => 'Create an account';
+  String get signupTitle => 'اکاؤنٹ بنائیں';
 
   @override
   String get signupSubtitle =>
-      'Create your account and fill in the form below to get started';
+      'شروع کرنے کے لیے اپنا اکاؤنٹ بنائیں اور فارم بھریں';
 
   @override
-  String get nameLabel => 'Name';
+  String get nameLabel => 'نام';
 
   @override
-  String get nameHint => 'Type name';
+  String get nameHint => 'نام لکھیں';
 
   @override
-  String get confirmPasswordLabel => 'Confirm Password';
+  String get confirmPasswordLabel => 'پاس ورڈ کی تصدیق کریں';
 
   @override
-  String get confirmPasswordHint => 'Confirm Password';
+  String get confirmPasswordHint => 'پاس ورڈ کی تصدیق کریں';
 
   @override
-  String get signUp => 'Sign Up';
+  String get signUp => 'سائن اپ';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => 'کیا آپ کا پہلے سے اکاؤنٹ ہے؟';
 
   @override
   String get profileSetupOptionalNote =>
-      'It’s Optional. You can fill it out later. Go to the next step by clicking the Skip button';
+      'یہ اختیاری ہے۔ آپ بعد میں بھر سکتے ہیں۔ اگلے مرحلے پر جانے کے لیے چھوڑیں پر کلک کریں';
 
   @override
-  String get personalInformation => 'Personal Information';
+  String get personalInformation => 'ذاتی معلومات';
 
   @override
-  String get yourNameLabel => 'Your Name';
+  String get yourNameLabel => 'آپ کا نام';
 
   @override
-  String get mobileNumberLabel => 'Mobile Number';
+  String get mobileNumberLabel => 'موبائل نمبر';
 
   @override
-  String get userNameHint => 'User name';
+  String get userNameHint => 'صارف نام';
 
   @override
-  String get selectGroupLabel => 'Select Group';
+  String get selectGroupLabel => 'گروپ منتخب کریں';
 
   @override
-  String get bloodGroupHint => 'Blood group';
+  String get bloodGroupHint => 'بلڈ گروپ';
 
   @override
-  String get countryLabel => 'Country';
+  String get countryLabel => 'ملک';
 
   @override
-  String get countryHint => 'Select country';
+  String get countryHint => 'ملک منتخب کریں';
 
   @override
-  String get cityLabel => 'City';
+  String get cityLabel => 'شہر';
 
   @override
-  String get cityHint => 'Select city';
+  String get cityHint => 'شہر منتخب کریں';
 
   @override
-  String get nextLabel => 'Next';
+  String get nextLabel => 'اگلا';
 
   @override
-  String get basicInformation => 'Basic Information';
+  String get basicInformation => 'بنیادی معلومات';
 
   @override
-  String get dobLabel => 'Date of Birth';
+  String get dobLabel => 'تاریخ پیدائش';
 
   @override
-  String get yourAgePrefix => 'Your age - ';
+  String get yourAgePrefix => 'آپ کی عمر - ';
 
   @override
-  String get genderLabel => 'Gender';
+  String get genderLabel => 'جنس';
 
   @override
-  String get donateWishLabel => 'I Want to donate blood';
+  String get donateWishLabel => 'میں خون کا عطیہ کرنا چاہتا/چاہتی ہوں';
 
   @override
-  String get aboutYourselfLabel => 'About yourself';
+  String get aboutYourselfLabel => 'اپنے بارے میں';
 
   @override
-  String get aboutYourselfHint => 'Type about yourself';
+  String get aboutYourselfHint => 'اپنے بارے میں لکھیں';
 
   @override
-  String get selectDate => 'Select date';
+  String get selectDate => 'تاریخ منتخب کریں';
 
   @override
-  String get male => 'Male';
+  String get male => 'مرد';
 
   @override
-  String get female => 'Female';
+  String get female => 'عورت';
 
   @override
-  String get other => 'Other';
+  String get other => 'دیگر';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'ہاں';
 
   @override
-  String get no => 'No';
+  String get no => 'نہیں';
 
   @override
-  String get welcomeDashboard => 'Welcome to Dashboard';
+  String get welcomeDashboard => 'ڈیش بورڈ میں خوش آمدید';
 
   @override
-  String get bloodDonor => 'Blood Donor';
+  String get bloodDonor => 'خون کا عطیہ دہندہ';
 
   @override
-  String get postEveryday => 'Post everyday';
+  String get postEveryday => 'روزانہ پوسٹ';
 
   @override
   String get areYouSureDeleteAccount =>
-      'Are you sure, you want to delete account?';
+      'کیا آپ واقعی اکاؤنٹ حذف کرنا چاہتے ہیں؟';
 
   @override
-  String get areYouSureLogout => 'Are you sure, you want to logout?';
+  String get areYouSureLogout => 'کیا آپ واقعی لاگ آؤٹ کرنا چاہتے ہیں؟';
 
   @override
-  String get cancel => 'Cancel';
+  String get noInternetConnection => 'انٹرنیٹ کنکشن نہیں ہے';
+
+  @override
+  String get checkingConnection => 'کنکشن چیک کیا جا رہا ہے...';
+
+  @override
+  String get retry => 'دوبارہ کوشش کریں';
+
+  @override
+  String get checkYourConnection => 'اپنا کنکشن چیک کریں';
+
+  @override
+  String get noInternetForCall =>
+      'انٹرنیٹ کنکشن دستیاب نہیں ہے۔ براہ کرم اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔';
+
+  @override
+  String get noInternetForPost =>
+      'انٹرنیٹ کنکشن نہیں ہے۔ پوسٹ بنانے کے لیے براہ کرم انٹرنیٹ سے منسلک ہوں۔';
+
+  @override
+  String get ok => 'ٹھیک ہے';
+
+  @override
+  String get cancel => 'منسوخ کریں';
 }

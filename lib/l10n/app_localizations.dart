@@ -522,6 +522,48 @@ abstract class AppLocalizations {
   /// **'Are you sure, you want to logout?'**
   String get areYouSureLogout;
 
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetConnection;
+
+  /// No description provided for @checkingConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking connection...'**
+  String get checkingConnection;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @checkYourConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection'**
+  String get checkYourConnection;
+
+  /// No description provided for @noInternetForCall.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection available. Please check your connection and try again.'**
+  String get noInternetForCall;
+
+  /// No description provided for @noInternetForPost.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please connect to the internet to create a post.'**
+  String get noInternetForPost;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

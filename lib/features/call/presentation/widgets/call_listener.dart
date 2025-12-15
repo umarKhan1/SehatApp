@@ -59,6 +59,9 @@ class _CallListenerState extends State<CallListener> {
     });
   }
 
+  Route? _incomingRoute;
+  Route? _callRoute;
+
   /// Handle navigation based on call state changes
   void _handleNavigation(CallState state) {
     if (!mounted) return;
@@ -91,9 +94,10 @@ class _CallListenerState extends State<CallListener> {
         if (state.phase == CallPhase.incoming &&
             state.session != null &&
             !_showingIncomingCall) {
-          // Incoming call should always take priority over any existing call screen
-          if (_showingCallPage && NavigatorService.canPop()) {
-            NavigatorService.pop();
+          // Close active call screen if open
+          if (_showingCallPage && _callRoute != null && _callRoute!.isActive) {
+            navigator.removeRoute(_callRoute!);
+            _callRoute = null;
             _showingCallPage = false;
           }
 
@@ -104,24 +108,25 @@ class _CallListenerState extends State<CallListener> {
             );
           }
 
-          final route = MaterialPageRoute(
+          _incomingRoute = MaterialPageRoute(
             fullscreenDialog: true,
+            settings: const RouteSettings(name: 'incoming_call'),
             builder: (_) => BlocProvider.value(
               value: context.read<CallCubit>(),
               child: IncomingCallPage(session: state.session!),
             ),
           );
 
-          NavigatorService.push(route)
+          NavigatorService.push(_incomingRoute!)
               ?.then((_) {
                 // Reset flag when the route is popped
                 if (kDebugMode) {
                   print('[CallListener] Incoming call screen popped');
                 }
                 _showingIncomingCall = false;
+                _incomingRoute = null;
 
-                // Re-evaluate navigation state in case we need to transition
-                // to CallPage (e.g. accepted call)
+                // Re-evaluate in case we need to transition
                 if (mounted) {
                   _handleNavigation(context.read<CallCubit>().state);
                 }
@@ -133,6 +138,7 @@ class _CallListenerState extends State<CallListener> {
                   );
                 }
                 _showingIncomingCall = false;
+                _incomingRoute = null;
               });
         }
         // Handle outgoing/connecting/live calls (call page)
@@ -140,46 +146,70 @@ class _CallListenerState extends State<CallListener> {
                 state.phase == CallPhase.connecting ||
                 state.phase == CallPhase.live) &&
             !_showingCallPage) {
-          // Only navigate if we're not already showing incoming call
-          if (!_showingIncomingCall) {
+          // Remove incoming route if present (e.g. accepted call)
+          if (_showingIncomingCall) {
+            // Let the Navigator handle the transition, or explicitly remove?
+            // If we accepted, IncomingPage might have popped itself?
+            // If it didn't, we should remove it.
+            if (_incomingRoute != null && _incomingRoute!.isActive) {
+              navigator.removeRoute(_incomingRoute!);
+            }
+            _incomingRoute = null;
+            _showingIncomingCall = false;
+          }
+
+          if (!_showingCallPage) {
             _showingCallPage = true;
             if (kDebugMode) {
-              print('[CallListener] Navigating to call screen');
+              print('[CallListener] Navigating to active call screen');
             }
 
-            NavigatorService.push(
-              MaterialPageRoute(
-                fullscreenDialog: true,
-                builder: (_) => BlocProvider.value(
-                  value: context.read<CallCubit>(),
-                  child: const CallPage(),
-                ),
+            _callRoute = MaterialPageRoute(
+              fullscreenDialog: true,
+              settings: const RouteSettings(name: 'active_call'),
+              builder: (_) => BlocProvider.value(
+                value: context.read<CallCubit>(),
+                child: const CallPage(),
               ),
-            )?.then((_) {
+            );
+
+            NavigatorService.push(_callRoute!)?.then((_) {
               // Reset flag when the route is popped
               _showingCallPage = false;
+              _callRoute = null;
             });
           }
         }
         // Handle call ended
         else if (state.phase == CallPhase.ended) {
+          if (kDebugMode) print('[CallListener] Call ended, cleaning up UI');
+
+          // Robust cleanup: Pop any route named 'incoming_call' or 'active_call'
+          navigator.popUntil((route) {
+            final name = route.settings.name;
+            if (name == 'incoming_call' || name == 'active_call') {
+              if (kDebugMode) {
+                print('[CallListener] Popping call route: $name');
+              }
+              return false; // Continue popping
+            }
+            return true; // Stop popping
+          });
+
+          // Clear manual references
+          _incomingRoute = null;
+          _callRoute = null;
           _showingIncomingCall = false;
           _showingCallPage = false;
-
-          // Pop call screens if they're showing
-          if (NavigatorService.canPop()) {
-            if (kDebugMode) {
-              print('[CallListener] Popping call screen');
-            }
-            NavigatorService.pop();
-          }
         }
       } catch (e) {
         if (kDebugMode) {
           print('[CallListener] Navigation error: $e');
         }
-        // Reset flags on error
+        // Reset flags on error for safety
         if (state.phase == CallPhase.ended) {
+          _incomingRoute = null;
+          _callRoute = null;
           _showingIncomingCall = false;
           _showingCallPage = false;
         }
