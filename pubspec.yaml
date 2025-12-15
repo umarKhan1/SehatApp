@@ -59,10 +59,15 @@ dependencies:
   connectivity_plus: ^6.1.2
   firebase_analytics:
   font_awesome_flutter: ^10.8.0 
-
+  mockito:
+  bloc_test:  
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.4
+  build_runner: ^2.4.13
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
