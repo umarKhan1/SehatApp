@@ -43,14 +43,14 @@ void main() {
     });
 
     test('short password makes form invalid', () {
-      cubit.onEmailChanged('test@example.com');
-      cubit.onPasswordChanged('123');
+      cubit..onEmailChanged('test@example.com')
+      ..onPasswordChanged('123');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('empty email makes form invalid', () {
-      cubit.onEmailChanged('');
-      cubit.onPasswordChanged('password123');
+      cubit..onEmailChanged('')
+      ..onPasswordChanged('password123');
       expect(cubit.state.isValid, isFalse);
     });
 
