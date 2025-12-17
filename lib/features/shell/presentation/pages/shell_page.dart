@@ -23,36 +23,44 @@ class ShellPage extends StatelessWidget {
           final pages = const [DashboardPage(), InboxPage(), MorePage()];
           return Scaffold(
             body: pages[state.index],
-            bottomNavigationBar: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: primary,
-              unselectedItemColor: inactive,
-              selectedFontSize: 15,
-              unselectedFontSize: 14,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-              currentIndex: state.index,
-              onTap: (i) => context.read<ShellCubit>().setTab(i),
-              items: [
-                BottomNavigationBarItem(
-                  icon: const FaIcon(FontAwesomeIcons.house, size: 20),
-                  activeIcon: const FaIcon(FontAwesomeIcons.house, size: 20),
-                  label: tx.navHome,
+            bottomNavigationBar: Theme(
+              data: Theme.of(context).copyWith(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+              ),
+              child: BottomNavigationBar(
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.white,
+                selectedItemColor: primary,
+                unselectedItemColor: inactive,
+                selectedFontSize: 15,
+                unselectedFontSize: 14,
+                selectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
                 ),
-                BottomNavigationBarItem(
-                  icon: const FaIcon(FontAwesomeIcons.message, size: 20),
-                  activeIcon: const FaIcon(
-                    FontAwesomeIcons.solidMessage,
-                    size: 20,
+                currentIndex: state.index,
+                onTap: (i) => context.read<ShellCubit>().setTab(i),
+                items: [
+                  BottomNavigationBarItem(
+                    icon: const FaIcon(FontAwesomeIcons.house, size: 20),
+                    activeIcon: const FaIcon(FontAwesomeIcons.house, size: 20),
+                    label: tx.navHome,
                   ),
-                  label: tx.navInbox,
-                ),
-                BottomNavigationBarItem(
-                  icon: const FaIcon(FontAwesomeIcons.grip, size: 20),
-                  activeIcon: const FaIcon(FontAwesomeIcons.grip, size: 20),
-                  label: tx.navMore,
-                ),
-              ],
+                  BottomNavigationBarItem(
+                    icon: const FaIcon(FontAwesomeIcons.message, size: 20),
+                    activeIcon: const FaIcon(
+                      FontAwesomeIcons.solidMessage,
+                      size: 20,
+                    ),
+                    label: tx.navInbox,
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const FaIcon(FontAwesomeIcons.grip, size: 20),
+                    activeIcon: const FaIcon(FontAwesomeIcons.grip, size: 20),
+                    label: tx.navMore,
+                  ),
+                ],
+              ),
             ),
           );
         },

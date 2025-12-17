@@ -11,7 +11,6 @@ import 'package:sehatapp/core/providers/app_providers.dart';
 import 'package:sehatapp/core/router/app_router.dart';
 import 'package:sehatapp/core/theme/app_theme.dart';
 import 'package:sehatapp/features/call/presentation/widgets/call_listener.dart';
-import 'package:sehatapp/features/notification/data/notification_service.dart';
 import 'package:sehatapp/firebase_options.dart';
 import 'package:sehatapp/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,12 +45,13 @@ Future<void> main() async {
     }
   }
 
-  // Initialize Notifications (FCM)
-  try {
-    await NotificationService().init();
-  } catch (e) {
-    debugPrint('Failed to init notifications: $e');
-  }
+  // Initialize Notifications (FCM) - DISABLED: Permissions handled through onboarding
+  // Notification service will be initialized after user grants permission in onboarding
+  // try {
+  //   await NotificationService().init();
+  // } catch (e) {
+  //   debugPrint('Failed to init notifications: $e');
+  // }
 
   runApp(MyApp(initialLocale: initialLocale));
 }

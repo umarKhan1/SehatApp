@@ -76,9 +76,29 @@ class _InboxPageState extends State<InboxPage> {
                           ? 'No message yet'
                           : 'Something went wrong. Please try again later';
                       return Center(
-                        child: Text(
-                          message,
-                          style: const TextStyle(color: Colors.red),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isIndexError
+                                  ? Icons.inbox_outlined
+                                  : Icons.error_outline,
+                              size: 100.sp,
+                              color: isIndexError
+                                  ? Colors.grey.shade300
+                                  : Colors.red.shade300,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              message,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isIndexError
+                                    ? Colors.grey.shade600
+                                    : Colors.red,
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }
@@ -87,13 +107,25 @@ class _InboxPageState extends State<InboxPage> {
 
                     // If no conversations, hide search bar and show empty state
                     if (convs.isEmpty) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Empty message
-                          SizedBox(height: 8.h),
-                          Center(child: Text('No message yet')),
-                        ],
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 100.sp,
+                              color: Colors.grey.shade300,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              'No message yet',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     }
 

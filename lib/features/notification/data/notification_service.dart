@@ -18,7 +18,13 @@ class NotificationService {
   factory NotificationService() => _instance;
   static final NotificationService _instance = NotificationService._internal();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  // Lazy initialization to prevent iOS from showing permission dialog on app start
+  FirebaseMessaging? _firebaseMessagingInstance;
+  FirebaseMessaging get _firebaseMessaging {
+    _firebaseMessagingInstance ??= FirebaseMessaging.instance;
+    return _firebaseMessagingInstance!;
+  }
+
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -27,26 +33,23 @@ class NotificationService {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // 1. Request permissions
-    await _firebaseMessaging.requestPermission();
-
-    // 2. Setup local notifications with tap handler
+    // 1. Setup local notifications with tap handler
     await _setupLocalNotifications();
 
-    // 3. Register background handler
+    // 2. Register background handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 4. Handle foreground messages - create local notification
+    // 3. Handle foreground messages - create local notification
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showLocalNotification(message.data);
     });
 
-    // 5. Handle notification tap when app is in background
+    // 4. Handle notification tap when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       _navigateBasedOnPayload(message.data);
     });
 
-    // 6. Check if app was opened by tapping notification (killed state)
+    // 5. Check if app was opened by tapping notification (killed state)
     final initialMessage = await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       Future.delayed(const Duration(milliseconds: 1500), () {
@@ -54,12 +57,27 @@ class NotificationService {
       });
     }
 
-    // 7. Subscribe to topic and save token
+    // 6. Subscribe to topic and save token (only if permission granted)
+    final notificationStatus = await _firebaseMessaging
+        .getNotificationSettings();
+    if (notificationStatus.authorizationStatus ==
+        AuthorizationStatus.authorized) {
+      await _firebaseMessaging.subscribeToTopic('all_users');
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) await _saveTokenToDatabase(user.uid);
+    }
+
+    _isInitialized = true;
+  }
+
+  /// Request notification permission (called from permissions onboarding)
+  Future<void> requestPermission() async {
+    await _firebaseMessaging.requestPermission();
+
+    // Subscribe to topic and save token after permission granted
     await _firebaseMessaging.subscribeToTopic('all_users');
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) await _saveTokenToDatabase(user.uid);
-
-    _isInitialized = true;
   }
 
   Future<void> _setupLocalNotifications() async {

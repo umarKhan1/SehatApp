@@ -100,10 +100,16 @@ class LoginValidationCubit extends Cubit<LoginValidationState> {
       // Use profileStep from user model, default to 1
       final int step = user?.profileStep ?? (profileCompleted ? 3 : 1);
 
-      // Debug logging
+      // Check if permissions onboarding is completed
+      final prefs = await SharedPreferences.getInstance();
+      final bool permissionsCompleted =
+          prefs.getBool('permissions_onboarding_complete') ?? false;
 
       String route;
-      if (profileCompleted || step >= 3) {
+      if (!permissionsCompleted) {
+        // First time login - show permissions onboarding
+        route = 'permissionsOnboarding';
+      } else if (profileCompleted || step >= 3) {
         route = 'shell';
       } else if (step == 2) {
         route = 'profileSetupStep2';
@@ -112,7 +118,75 @@ class LoginValidationCubit extends Cubit<LoginValidationState> {
       }
 
       // Save session preference
+      await prefs.setBool('stay_logged_in', true);
+
+      emit(
+        state.copyWith(submitting: false, success: true, nextRouteName: route),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(submitting: false, error: e.toString(), success: false),
+      );
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    emit(state.copyWith(submitting: true, success: false));
+    try {
+      // Sign in with Google
+      final cred = await auth.signInWithGoogle();
+      final uid = cred.user!.uid;
+
+      // Check if user exists in Firestore
+      UserModel? user = await users.getUser(uid);
+
+      // If user doesn't exist, create initial user document
+      if (user == null) {
+        final displayName = cred.user!.displayName ?? 'User';
+        final email = cred.user!.email ?? '';
+
+        await users.createInitialUser(
+          uid: uid,
+          name: displayName,
+          email: email,
+        );
+
+        // New user - go to profile setup step 1
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('stay_logged_in', true);
+
+        emit(
+          state.copyWith(
+            submitting: false,
+            success: true,
+            nextRouteName: 'profileSetupStep1',
+          ),
+        );
+        return;
+      }
+
+      // Existing user - follow same routing logic as email login
+      final bool profileCompleted = user.profileCompleted;
+      final int step = user.profileStep;
+
+      // Check if permissions onboarding is completed
       final prefs = await SharedPreferences.getInstance();
+      final bool permissionsCompleted =
+          prefs.getBool('permissions_onboarding_complete') ?? false;
+
+      String route;
+      if (!permissionsCompleted) {
+        // First time login - show permissions onboarding
+        route = 'permissionsOnboarding';
+      } else if (profileCompleted || step >= 3) {
+        route = 'shell';
+      } else if (step == 2) {
+        route = 'profileSetupStep2';
+      } else {
+        route = 'profileSetupStep1';
+      }
+
+      // Save session preference
       await prefs.setBool('stay_logged_in', true);
 
       emit(

@@ -9,6 +9,7 @@ import 'package:sehatapp/features/chat/presentation/pages/inbox_page.dart';
 import 'package:sehatapp/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:sehatapp/features/notification/presentation/pages/notification_page.dart';
 import 'package:sehatapp/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:sehatapp/features/onboarding/presentation/pages/permissions_onboarding_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step1_page.dart';
 import 'package:sehatapp/features/profile/presentation/pages/profile_setup_step2_page.dart';
 import 'package:sehatapp/features/recently_viewed/presentation/pages/recently_viewed_page.dart';
@@ -38,6 +39,11 @@ final GoRouter appRouter = GoRouter(
       path: '/signup',
       name: 'signup',
       builder: (context, state) => const SignupPage(),
+    ),
+    GoRoute(
+      path: '/permissions-onboarding',
+      name: 'permissionsOnboarding',
+      builder: (context, state) => const PermissionsOnboardingPage(),
     ),
     // Profile Setup - entry point is step1
     GoRoute(
