@@ -28,6 +28,20 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>GIDClientID</key>
+	<string>777718294130-e1gp00qro101tih6hb2md504e5j5rfi8.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.777718294130-e1gp00qro101tih6hb2md504e5j5rfi8</string>
+			</array>
+		</dict>
+</array>	
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -45,6 +59,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>This app needs permission to send you notifications about blood donation requests and important messages.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs access to your microphone to make voice and video calls.</string>
 	<key>NSCameraUsageDescription</key>
