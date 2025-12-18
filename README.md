@@ -988,7 +988,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Muhammad Umar Khan**
 
 - GitHub: [@umarKhan1](https://github.com/umarKhan1)
-- Email: your.email@example.com
+- LinkedIn: [Muhammad Omar](https://www.linkedin.com/in/muhammad-omar-0335/)
 
 ---
 
@@ -1003,7 +1003,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ##  Support
 
-For support, email your.email@example.com or open an issue in the repository.
+For support, connect on [LinkedIn](https://www.linkedin.com/in/muhammad-omar-0335/) or open an issue in the repository.
 
 ---
 
