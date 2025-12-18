@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sehatapp/core/localization/app_texts.dart';
 import 'package:sehatapp/features/chat/presentation/pages/inbox_page.dart';
 import 'package:sehatapp/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:sehatapp/features/more/presentation/pages/more_page.dart';
 import 'package:sehatapp/features/shell/bloc/shell_cubit.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ShellPage extends StatelessWidget {
   const ShellPage({super.key});

@@ -91,6 +91,7 @@ class DashboardPage extends StatelessWidget {
                     notificationCount: notificationState.unreadCount,
                     onNotificationsTap: () =>
                         context.pushNamed('notifications'),
+                    onAITap: () => context.pushNamed('ai-chat'),
                   );
                 },
               );

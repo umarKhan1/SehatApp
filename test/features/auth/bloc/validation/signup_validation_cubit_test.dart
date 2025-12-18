@@ -28,66 +28,74 @@ void main() {
     });
 
     test('invalid email makes form invalid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('invalid');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('password123');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('invalid')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('password123');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('valid email with all other fields valid makes form valid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('password123');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('password123');
       expect(cubit.state.isValid, isTrue);
     });
 
     test('password less than 6 characters makes form invalid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('12345');
-      cubit.onConfirmPasswordChanged('12345');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('12345')
+        ..onConfirmPasswordChanged('12345');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('password with 6 or more characters makes form valid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('123456');
-      cubit.onConfirmPasswordChanged('123456');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('123456')
+        ..onConfirmPasswordChanged('123456');
       expect(cubit.state.isValid, isTrue);
     });
 
     test('empty name makes form invalid', () {
-      cubit.onNameChanged('');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('password123');
+      cubit
+        ..onNameChanged('')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('password123');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('non-empty name with all other fields valid makes form valid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('password123');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('password123');
       expect(cubit.state.isValid, isTrue);
     });
 
     test('mismatched passwords make form invalid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('different');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('different');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('matching passwords with all other fields valid makes form valid', () {
-      cubit.onNameChanged('John Doe');
-      cubit.onEmailChanged('valid@email.com');
-      cubit.onPasswordChanged('password123');
-      cubit.onConfirmPasswordChanged('password123');
+      cubit
+        ..onNameChanged('John Doe')
+        ..onEmailChanged('valid@email.com')
+        ..onPasswordChanged('password123')
+        ..onConfirmPasswordChanged('password123');
       expect(cubit.state.isValid, isTrue);
     });
 

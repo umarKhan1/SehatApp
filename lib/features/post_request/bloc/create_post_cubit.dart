@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sehatapp/features/post_request/data/post_repository.dart';
 import 'package:sehatapp/core/services/network_service.dart';
+import 'package:sehatapp/features/post_request/data/post_repository.dart';
 
 class CreatePostState {
   const CreatePostState({this.loading = false, this.error, this.postId});

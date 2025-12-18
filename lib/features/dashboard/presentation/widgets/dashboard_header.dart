@@ -9,6 +9,7 @@ class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
     this.avatarAsset = 'assets/images/applogo.png',
     this.donateOn = false,
     this.onNotificationsTap,
+    this.onAITap,
     this.notificationCount = 0,
   });
 
@@ -16,6 +17,7 @@ class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
   final String avatarAsset;
   final bool donateOn;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onAITap;
   final int notificationCount;
 
   @override
@@ -57,6 +59,12 @@ class DashboardHeader extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
+            // AI Assistant Icon
+            IconButton(
+              icon: const Icon(Icons.auto_awesome),
+              onPressed: onAITap,
+            ),
+            // Notification Icon
             Stack(
               alignment: Alignment.center,
               children: [

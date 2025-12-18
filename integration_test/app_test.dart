@@ -1,9 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:sehatapp/main.dart' as app;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -72,8 +71,6 @@ void main() {
       app.main();
       await tester.pumpAndSettle();
 
-      // TODO: Add login steps
-
       // Navigate to chat
       await tester.tap(find.text('Inbox'));
       await tester.pumpAndSettle();
@@ -110,11 +107,6 @@ void main() {
       // Login first
       app.main();
       await tester.pumpAndSettle();
-
-      // TODO: Navigate to create post
-      // TODO: Fill form
-      // TODO: Submit
-      // TODO: Verify in Firestore
     });
   });
 }

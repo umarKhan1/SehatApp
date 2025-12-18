@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sehatapp/core/localization/app_locale_cubit.dart';
+import 'package:sehatapp/core/network/network_status_cubit.dart';
+import 'package:sehatapp/core/services/network_service.dart';
 import 'package:sehatapp/features/auth/bloc/signup/signup_cubit.dart';
 import 'package:sehatapp/features/auth/bloc/validation/login_validation.dart';
 import 'package:sehatapp/features/auth/bloc/validation/signup_validation_cubit.dart';
@@ -28,8 +30,6 @@ import 'package:sehatapp/features/recently_viewed/data/recently_viewed_repositor
 import 'package:sehatapp/features/search/bloc/search_cubit.dart';
 import 'package:sehatapp/features/search/data/search_repository.dart';
 import 'package:sehatapp/features/splash/bloc/splash_cubit.dart';
-import 'package:sehatapp/core/network/network_status_cubit.dart';
-import 'package:sehatapp/core/services/network_service.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({

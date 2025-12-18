@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sehatapp/core/services/permissions_service.dart';
 import 'package:sehatapp/features/notification/data/notification_service.dart';
-import 'package:go_router/go_router.dart';
 
 class PermissionsOnboardingPage extends StatefulWidget {
   const PermissionsOnboardingPage({super.key});
@@ -79,7 +80,7 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage> {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
+                  color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -172,10 +173,14 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage> {
 
     try {
       final permission = _permissions[_currentStep].permission;
-      print('[PermissionsOnboarding] Requesting permission: $permission');
+      if (kDebugMode) {
+        print('[PermissionsOnboarding] Requesting permission: $permission');
+      }
 
       final status = await permission.request();
-      print('[PermissionsOnboarding] Permission status: $status');
+      if (kDebugMode) {
+        print('[PermissionsOnboarding] Permission status: $status');
+      }
 
       // Handle permanently denied permissions
       if (status.isPermanentlyDenied) {
@@ -209,14 +214,20 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage> {
 
       // Initialize notification service immediately after user grants notification permission
       if (permission == Permission.notification && status.isGranted) {
-        print('[PermissionsOnboarding] Initializing NotificationService');
+        if (kDebugMode) {
+          print('[PermissionsOnboarding] Initializing NotificationService');
+        }
         try {
           await NotificationService().init();
-          print(
-            '[PermissionsOnboarding] NotificationService initialized successfully',
-          );
+          if (kDebugMode) {
+            print(
+              '[PermissionsOnboarding] NotificationService initialized successfully',
+            );
+          }
         } catch (e) {
-          print('[PermissionsOnboarding] NotificationService init error: $e');
+          if (kDebugMode) {
+            print('[PermissionsOnboarding] NotificationService init error: $e');
+          }
         }
       }
 
@@ -247,15 +258,14 @@ class _PermissionsOnboardingPageState extends State<PermissionsOnboardingPage> {
 }
 
 class _PermissionInfo {
-  final Permission permission;
-  final IconData icon;
-  final String title;
-  final String description;
-
   _PermissionInfo({
     required this.permission,
     required this.icon,
     required this.title,
     required this.description,
   });
+  final Permission permission;
+  final IconData icon;
+  final String title;
+  final String description;
 }

@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sehatapp/core/services/network_service.dart';
 import 'package:sehatapp/features/auth/data/user_repository.dart';
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
-import 'package:sehatapp/core/services/network_service.dart';
 
 class ChatState {
   const ChatState({

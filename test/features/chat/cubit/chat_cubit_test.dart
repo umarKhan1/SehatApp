@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bloc_test/bloc_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:sehatapp/features/chat/presentation/cubit/chat_cubit.dart';
-import 'package:sehatapp/features/chat/data/chat_repository.dart';
 import 'package:sehatapp/features/auth/data/user_repository.dart';
+import 'package:sehatapp/features/chat/data/chat_repository.dart';
+import 'package:sehatapp/features/chat/presentation/cubit/chat_cubit.dart';
 
 class MockChatRepository extends Mock implements ChatRepository {}
 
@@ -38,7 +37,6 @@ void main() {
         conversationId: 'conv123',
         otherUid: 'user456',
         messages: [],
-        loading: false,
       );
 
       expect(state.conversationId, 'conv123');

@@ -1,5 +1,8 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sehatapp/core/navigation/navigator_service.dart';
+import 'package:sehatapp/features/ai_chat/presentation/cubit/ai_chat_cubit.dart';
+import 'package:sehatapp/features/ai_chat/presentation/pages/ai_chat_page.dart';
 import 'package:sehatapp/features/auth/presentation/pages/login_page.dart';
 import 'package:sehatapp/features/auth/presentation/pages/signup_page.dart';
 import 'package:sehatapp/features/blood_request/presentation/pages/blood_request_details_page.dart';
@@ -109,6 +112,14 @@ final GoRouter appRouter = GoRouter(
         final uid = extra?['uid'] as String? ?? '';
         return ChatPage(title: title, otherUid: uid);
       },
+    ),
+    GoRoute(
+      path: '/ai-chat',
+      name: 'ai-chat',
+      builder: (context, state) => BlocProvider(
+        create: (context) => AIChatCubit(context),
+        child: const AIChatPage(),
+      ),
     ),
     GoRoute(
       path: '/notifications',

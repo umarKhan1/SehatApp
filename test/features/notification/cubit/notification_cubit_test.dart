@@ -52,7 +52,6 @@ void main() {
         title: 'New Message',
         subtitle: 'You have a new message',
         type: NotificationType.message,
-        isRead: false,
         timestamp: DateTime.now(),
       ),
       NotificationEntity(
@@ -60,7 +59,6 @@ void main() {
         title: 'New Post',
         subtitle: 'Someone posted a blood request',
         type: NotificationType.post,
-        isRead: false,
         timestamp: DateTime.now(),
       ),
     ];

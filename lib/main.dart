@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sehatapp/core/config/screenutil_config.dart';
 import 'package:sehatapp/core/constants/app_strings.dart';
@@ -10,14 +11,19 @@ import 'package:sehatapp/core/localization/app_locale_cubit.dart';
 import 'package:sehatapp/core/providers/app_providers.dart';
 import 'package:sehatapp/core/router/app_router.dart';
 import 'package:sehatapp/core/theme/app_theme.dart';
+import 'package:sehatapp/core/widgets/network_status_banner.dart';
 import 'package:sehatapp/features/call/presentation/widgets/call_listener.dart';
 import 'package:sehatapp/firebase_options.dart';
 import 'package:sehatapp/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sehatapp/core/widgets/network_status_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  // ignore: avoid_redundant_argument_values
+  await dotenv.load(fileName: '.env');
+
   final prefs = await SharedPreferences.getInstance();
   final code = prefs.getString('app_locale_code') ?? 'en';
   final initialLocale = Locale(code);
@@ -45,14 +51,6 @@ Future<void> main() async {
     }
   }
 
-  // Initialize Notifications (FCM) - DISABLED: Permissions handled through onboarding
-  // Notification service will be initialized after user grants permission in onboarding
-  // try {
-  //   await NotificationService().init();
-  // } catch (e) {
-  //   debugPrint('Failed to init notifications: $e');
-  // }
-
   runApp(MyApp(initialLocale: initialLocale));
 }
 
@@ -70,6 +68,7 @@ class MyApp extends StatelessWidget {
             return MaterialApp.router(
               title: AppStrings.appName,
               theme: AppTheme.light,
+              debugShowCheckedModeBanner: false,
               darkTheme: AppTheme.light,
               routerConfig: appRouter,
               locale: locale,

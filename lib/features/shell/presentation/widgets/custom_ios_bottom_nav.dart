@@ -2,19 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CustomIOSBottomNavItem {
+  const CustomIOSBottomNavItem({required this.icon, required this.label});
   final IconData icon;
   final String label;
-
-  const CustomIOSBottomNavItem({required this.icon, required this.label});
 }
 
 class CustomIOSBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-  final List<CustomIOSBottomNavItem> items;
-  final Color selectedColor;
-  final Color unselectedColor;
-
   const CustomIOSBottomNavBar({
     super.key,
     required this.currentIndex,
@@ -23,6 +16,11 @@ class CustomIOSBottomNavBar extends StatelessWidget {
     this.selectedColor = Colors.blue,
     this.unselectedColor = Colors.grey,
   });
+  final int currentIndex;
+  final Function(int) onTap;
+  final List<CustomIOSBottomNavItem> items;
+  final Color selectedColor;
+  final Color unselectedColor;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +32,7 @@ class CustomIOSBottomNavBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

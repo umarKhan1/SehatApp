@@ -63,6 +63,8 @@ dependencies:
   mockito:
   bloc_test:  
   permission_handler: ^12.0.1
+  flutter_dotenv: ^5.2.1
+  flutter_markdown: ^0.7.4+1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -92,7 +94,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animation/
-    - assets/ringtone/
+    - .env
 
   generate: true
 

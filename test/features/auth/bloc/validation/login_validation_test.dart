@@ -31,26 +31,30 @@ void main() {
     });
 
     test('valid email and password makes form valid', () {
-      cubit.onEmailChanged('test@example.com');
-      cubit.onPasswordChanged('password123');
+      cubit
+        ..onEmailChanged('test@example.com')
+        ..onPasswordChanged('password123');
       expect(cubit.state.isValid, isTrue);
     });
 
     test('invalid email makes form invalid', () {
-      cubit.onEmailChanged('invalid-email');
-      cubit.onPasswordChanged('password123');
+      cubit
+        ..onEmailChanged('invalid-email')
+        ..onPasswordChanged('password123');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('short password makes form invalid', () {
-      cubit..onEmailChanged('test@example.com')
-      ..onPasswordChanged('123');
+      cubit
+        ..onEmailChanged('test@example.com')
+        ..onPasswordChanged('123');
       expect(cubit.state.isValid, isFalse);
     });
 
     test('empty email makes form invalid', () {
-      cubit..onEmailChanged('')
-      ..onPasswordChanged('password123');
+      cubit
+        ..onEmailChanged('')
+        ..onPasswordChanged('password123');
       expect(cubit.state.isValid, isFalse);
     });
 

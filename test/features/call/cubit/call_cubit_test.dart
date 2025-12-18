@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:sehatapp/features/call/presentation/cubit/call_cubit.dart';
 import 'package:sehatapp/features/call/domain/repositories/call_repository.dart';
+import 'package:sehatapp/features/call/presentation/cubit/call_cubit.dart';
 import 'package:sehatapp/features/chat/data/chat_repository.dart';
 
 class MockCallRepository extends Mock implements ICallRepository {}
@@ -49,11 +49,7 @@ void main() {
     });
 
     test('state has correct properties', () {
-      final state = CallState(
-        phase: CallPhase.idle,
-        isMuted: true,
-        isSpeakerOn: false,
-      );
+      final state = CallState(isMuted: true, isSpeakerOn: false);
 
       expect(state.phase, CallPhase.idle);
       expect(state.isMuted, isTrue);

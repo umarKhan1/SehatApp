@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sehatapp/features/notification/domain/entities/notification_entity.dart';
 import 'package:sehatapp/features/notification/domain/usecases/get_notifications_usecase.dart';
-import 'package:sehatapp/features/notification/domain/usecases/get_notifications_usecase.dart';
 import 'package:sehatapp/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
 import 'package:sehatapp/features/notification/domain/usecases/mark_notification_read_usecase.dart';
 

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sehatapp/core/network/network_status_cubit.dart';
-import 'package:sehatapp/l10n/app_localizations.dart';
 
 /// Top banner that shows when offline with retry button
 class NetworkStatusBanner extends StatelessWidget {
@@ -31,7 +30,6 @@ class NetworkStatusBanner extends StatelessWidget {
 
   Widget _buildBanner(BuildContext context, NetworkStatus state) {
     final isChecking = state is NetworkChecking;
-    final tx = AppLocalizations.of(context)!;
 
     return Container(
       width: double.infinity,
@@ -56,7 +54,9 @@ class NetworkStatusBanner extends StatelessWidget {
             // Message
             Expanded(
               child: Text(
-                isChecking ? tx.checkingConnection : tx.noInternetConnection,
+                isChecking
+                    ? 'Checking connection...'
+                    : 'No internet connection',
                 style: GoogleFonts.poppins(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
@@ -82,7 +82,7 @@ class NetworkStatusBanner extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  tx.retry,
+                  'Retry',
                   style: GoogleFonts.poppins(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
